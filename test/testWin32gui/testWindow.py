@@ -12,6 +12,11 @@ def foo(hwnd, mouse):
 if __name__ == '__main__':
     EnumWindows(foo, 0)
     lt = [t for t in titles if t]
-    lt.sort()
+    for t in lt:
+        print(t)
+
+if __name__ == '__main__':
+    EnumWindows(foo, 0)
+    lt = [t for t in titles if t]
     for t in lt:
         print(t)

@@ -1,0 +1,28 @@
+version: 1
+formatters:
+  brief:
+    format: "%(asctime)s|%(name)s|%(levelname)s|%(message)s"
+  simple:
+    format: "%(asctime)s|%(name)s|%(levelname)s|%(message)s"
+handlers:
+  console:
+    class: logging.StreamHandler
+    formatter: brief
+    level: DEBUG
+    stream: ext://sys.stdout
+  file:
+    class: logging.FileHandler
+    formatter: simple
+    level: DEBUG
+    filename: conosole.log
+  error:
+    class: logging.handlers.RotatingFileHandler
+    level: ERROR
+    formatter: simple
+    filename: error.log
+    maxBytes: 10485760
+    backupCount: 20
+    encoding: utf8
+root:
+  level: DEBUG
+  handlers: [console, file, error]
