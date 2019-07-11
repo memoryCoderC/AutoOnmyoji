@@ -1,17 +1,11 @@
-from win32gui import *
-
-titles = set()
-
-
-def foo(hwnd, mouse):
-    # 去掉下面这句就所有都输出了，但是我不需要那么多
-    if IsWindow(hwnd) and IsWindowEnabled(hwnd) and IsWindowVisible(hwnd):
-        titles.add(GetWindowText(hwnd))
-
+from src.image.ImageSearch import *
+from src.window.WndowController import Window
 
 if __name__ == '__main__':
-    EnumWindows(foo, 0)
-    lt = [t for t in titles if t]
-    lt.sort()
-    for t in lt:
-        print(t)
+    windowTitle = "阴阳师-网易游戏"
+    window = Window(windowTitle)
+    screenshot_bytes, _width, _height = window.hwd_screenshot()
+    _img_opencv = get_img_opencv(screenshot_bytes, _width, _height)
+    left_top, right_bottom = best_match(_img_opencv, read_img(u"resource/img/tansuo.png", 0))
+    print(left_top, right_bottom)
+    window.click(left_top[0] + 5, left_top[1] + 5)
