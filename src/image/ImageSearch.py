@@ -3,9 +3,10 @@ import numpy
 import numpy as np
 
 
-def mutl_match(search_pic, template_pic, threshold):
+def mutl_match(search_pic, template_pic, threshold, debug=False):
     """
     图像搜索，在目标图上找到相似的指定图片,多图像匹配
+    :param debug:
     :param search_pic:
     :param template_pic:
     :param threshold:
@@ -20,15 +21,18 @@ def mutl_match(search_pic, template_pic, threshold):
     loc = np.where(res >= threshold)  # 匹配程度大于%80的坐标y,x
     for pt in zip(*loc[::-1]):  # *号表示可选参数
         cv2.rectangle(img_rgb, pt, (pt[0] + w, pt[1] + h), (7, 249, 151), 2)
-    cv2.imshow('Detected', img_rgb)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    if debug:
+        cv2.imshow('Detected', img_rgb)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
     return
 
 
-def best_match(search_pic, template_pic):
+def best_match(search_pic, template_pic, threshold, debug=False):
     """
     图像搜索，在目标图上找到相似的指定图片，匹配度最高的位置
+    :param threshold:
+    :param debug:
     :param search_pic:
     :param template_pic:
     :return:
@@ -38,15 +42,24 @@ def best_match(search_pic, template_pic):
     img_gray = cv2.cvtColor(search_pic, cv2.COLOR_BGR2GRAY)
     w, h = template_pic.shape[::-1]  # rows->h, cols->w
     # 相关系数匹配方法：cv2.TM_CCOEFF
+
+    # 平方差匹配CV_TM_SQDIFF：用两者的平方差来匹配，最好的匹配值为0
+    # 归一化平方差匹配CV_TM_SQDIFF_NORMED
+    # 相关匹配CV_TM_CCORR：用两者的乘积匹配，数值越大表明匹配程度越好
+    # 归一化相关匹配CV_TM_CCORR_NORMED
+    # 相关系数匹配CV_TM_CCOEFF：用两者的相关系数匹配，1
+    # 表示完美的匹配，-1
+    # 表示最差的匹配
+    # 归一化相关系数匹配CV_TM_CCOEFF_NORMED
     res = cv2.matchTemplate(img_gray, template_pic, cv2.TM_CCOEFF)
     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
     left_top = max_loc  # 左上角
     right_bottom = (left_top[0] + w, left_top[1] + h)  # 右下角
-
-    cv2.rectangle(search_pic, left_top, right_bottom, 255, 2)  # 画出矩形位置
-    cv2.imshow('Detected', search_pic)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    if debug:
+        cv2.rectangle(search_pic, left_top, right_bottom, 255, 2)  # 画出矩形位置
+        cv2.imshow('Detected', search_pic)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
     return left_top, right_bottom
 
 
@@ -54,6 +67,7 @@ def get_img_opencv(screenshot_bytes, _width, _height):
     im_opencv = numpy.frombuffer(screenshot_bytes, dtype='uint8')
     im_opencv.shape = (_height, _width, 4)
     return im_opencv
+
 
 def read_img(template_pic, flag=-1):
     if flag == -1:

@@ -1,4 +1,5 @@
 # -*-coding:utf-8-*-
+import random
 import time
 
 import win32api
@@ -7,8 +8,6 @@ import win32gui
 import win32ui
 
 from src.image.ImageSearch import *
-
-# import lackey
 
 """
 用于获取windows窗口信息
@@ -116,5 +115,7 @@ class Window:
         time.sleep(0.05)
         win32api.PostMessage(self.hwnd, win32con.WM_KEYFIRST, 68, None)  # 起作用
 
-
-
+    def clickRange(self, left_top, right_bottom):
+        x = random.randint(left_top[0], right_bottom[0])
+        y = random.randint(left_top[1], right_bottom[1])
+        self.click(x, y)
