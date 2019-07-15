@@ -2,6 +2,42 @@ import cv2
 import numpy
 import numpy as np
 
+"""
+sift算法匹配
+"""
+
+
+def sift_kp(image):
+    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    sift = cv2.xfeatures2d_SIFT.create()
+    kp, des = sift.detectAndCompute(image, None)
+    kp_image = cv2.drawKeypoints(gray_image, kp, None)
+    return kp_image, kp, des
+
+
+def get_good_match(des1, des2):
+    bf = cv2.BFMatcher()
+    matches = bf.knnMatch(des1, des2, k=2)
+    good = []
+    for m, n in matches:
+        if m.distance < 0.75 * n.distance:
+            good.append(m)
+    return good
+
+
+def siftImageAlignment(img1, img2):
+    _, kp1, des1 = sift_kp(img1)
+    _, kp2, des2 = sift_kp(img2)
+    good_match = get_good_match(des1, des2)
+    if len(good_match) > 4:
+        pts_a = np.float32([kp1[m.queryIdx].pt for m in good_match]).reshape(-1, 1, 2)
+        pts_b = np.float32([kp2[m.trainIdx].pt for m in good_match]).reshape(-1, 1, 2)
+        ransac_reproj_threshold = 4
+        H, status = cv2.findHomography(pts_a, pts_b, cv2.RANSAC, ransac_reproj_threshold);
+        img_out = cv2.warpPerspective(img2, H, (img1.shape[1], img1.shape[0]),
+                                      flags=cv2.INTER_LINEAR + cv2.WARP_INVERSE_MAP)
+    return img_out, H, status
+
 
 def mutl_match(search_pic, template_pic, threshold, debug=False):
     """
@@ -51,21 +87,31 @@ def best_match(search_pic, template_pic, threshold, debug=False):
     # 表示完美的匹配，-1
     # 表示最差的匹配
     # 归一化相关系数匹配CV_TM_CCOEFF_NORMED
-    res = cv2.matchTemplate(img_gray, template_pic, cv2.TM_CCOEFF)
+    res = cv2.matchTemplate(img_gray, template_pic, cv2.TM_CCOEFF_NORMED)
     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
     left_top = max_loc  # 左上角
-    right_bottom = (left_top[0] + w, left_top[1] + h)  # 右下角
-    if debug:
-        cv2.rectangle(search_pic, left_top, right_bottom, 255, 2)  # 画出矩形位置
-        cv2.imshow('Detected', search_pic)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-    return left_top, right_bottom
+    if max_val > threshold:
+        right_bottom = (left_top[0] + w, left_top[1] + h)  # 右下角
+        if debug:
+            cv2.rectangle(search_pic, left_top, right_bottom, 255, 2)  # 画出矩形位置
+            cv2.imshow('Detected', search_pic)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+        return left_top, right_bottom
+    elif left_top[0] == 0 and left_top[1] == 0:
+        raise Exception("截取屏幕失败")
+    return None, None
 
 
-def get_img_opencv(screenshot_bytes, _width, _height):
+def get_img_opencv(screenshot_bytes, _width, _height, debug=False):
     im_opencv = numpy.frombuffer(screenshot_bytes, dtype='uint8')
     im_opencv.shape = (_height, _width, 4)
+    if im_opencv.max == 0 and im_opencv.min == 0:
+        raise Exception("截取屏幕失败")
+    if debug:
+        cv2.imshow('Detected', im_opencv)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
     return im_opencv
 
 
