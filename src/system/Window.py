@@ -7,15 +7,16 @@ import win32con
 import win32gui
 import win32ui
 
-from src.image.ImageSearch import *
+from src.image import Image
 
 """
 用于获取windows窗口信息
 """
+default_window_width = 1152
+default_window_height = 679
 
 
 class Window:
-
     def __init__(self, window_title):
         self.window_title = window_title
         self.hwnd = win32gui.FindWindow(win32con.NULL, self.window_title)
@@ -70,7 +71,7 @@ class Window:
             ##方法三（第一部分）：opencv+numpy保存
             ###获取位图信息
             signed_ints_array = _save_bit_map.GetBitmapBits(True)
-            return signed_ints_array, _width, _height
+            return Image.get_img_opencv(signed_ints_array, _width, _height)
             ##方法三（后续转第二部分）
         finally:
             # 内存释放
@@ -95,27 +96,80 @@ class Window:
         # cv2.waitKey(0)
         # cv2.destroyAllWindows()
 
-    def show_hwd_screenshot(self):
-        img, width, height = self.hwd_screenshot()
-        im_opencv = numpy.frombuffer(img, dtype='uint8')
-        im_opencv.shape = (height, width, 4)
-        cv2.cvtColor(im_opencv, cv2.COLOR_BGRA2RGB)
-        cv2.imwrite("im_opencv.jpg", im_opencv, [int(cv2.IMWRITE_JPEG_QUALITY), 100])  # 保存
-        cv2.namedWindow('im_opencv')  # 命名窗口
-        cv2.imshow("im_opencv", im_opencv)  # 显示
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+    def mouse_active(self):
+        win32api.SendMessage(self.hwnd, win32con.WM_MOUSEACTIVATE, 68, None)  # 起作用
 
     def click(self, x, y):
         long_position = win32api.MAKELONG(x, y)
         time.sleep(0.05)
+        # win32gui.SendMessage(self.hwnd, win32con.WM_MOUSEACTIVATE, win32con.WM_LBUTTONDOWN, long_position)
+        # win32gui.PostMessage(self.hwnd, win32con.WM_MOUSEMOVE, 0, long_position)
         win32api.PostMessage(self.hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, long_position)
         time.sleep(0.05)  # 上下行代码不起作用（或者说是没有效果）
         win32api.PostMessage(self.hwnd, win32con.WM_LBUTTONUP, win32con.MK_LBUTTON, long_position)
         time.sleep(0.05)
         win32api.PostMessage(self.hwnd, win32con.WM_KEYFIRST, 68, None)  # 起作用
 
-    def clickRange(self, left_top, right_bottom):
+    def click_range(self, left_top, right_bottom):
         x = random.randint(left_top[0], right_bottom[0])
         y = random.randint(left_top[1], right_bottom[1])
         self.click(x, y)
+
+    def mouse_drag(self, pos1, pos2):
+        """
+        后台鼠标拖拽
+            :param self:
+            :param pos1: (x,y) 起点坐标
+            :param pos2: (x,y) 终点坐标
+        """
+        import numpy
+        move_x = numpy.linspace(pos1[0], pos2[0], num=20, endpoint=True)[0:]
+        move_y = numpy.linspace(pos1[1], pos2[1], num=20, endpoint=True)[0:]
+        win32gui.SendMessage(self.hwnd, win32con.WM_LBUTTONDOWN, 0, win32api.MAKELONG(pos1[0], pos1[1]))
+        for i in range(20):
+            x = int(round(move_x[i]))
+            y = int(round(move_y[i]))
+            win32gui.SendMessage(self.hwnd, win32con.WM_MOUSEMOVE, 0, win32api.MAKELONG(x, y))
+            time.sleep(0.01)
+        win32gui.SendMessage(self.hwnd, win32con.WM_LBUTTONUP, 0, win32api.MAKELONG(pos2[0], pos2[1]))
+
+    def mouse_move(self, pos1, pos2):
+        """
+        后台鼠标移动
+            :param self:
+            :param pos1: (x,y) 起点坐标
+            :param pos2: (x,y) 终点坐标
+        """
+        step_width_list = []
+        step_height_list = []
+        step_list = []
+        width = pos2[0] - pos1[0]
+        height = pos2[1] - pos1[1]
+        step_width = 6
+        step_height = 6
+
+        if width < 0:
+            step_width = -step_width
+        if height < 0:
+            step_height = -step_height
+
+        for i in range(pos1[0], pos2[0], step_width):
+            step_width_list.append(i)
+        for i in range(pos1[1], pos2[1], step_height):
+            step_height_list.append(i)
+
+        if len(step_width_list) < len(step_height_list):
+            for i in range(len(step_height_list)):
+                if i < len(step_width_list):
+                    step_list.append([step_width_list[i], step_height_list[i]])
+                else:
+                    step_list.append([pos2[0], step_height_list[i]])
+        else:
+            for i in range(len(step_width_list)):
+                if i < len(step_height_list):
+                    step_list.append([step_width_list[i], step_height_list[i]])
+                else:
+                    step_list.append([step_width_list[i], pos2[1]])
+        for pos in step_list:
+            win32gui.SendMessage(self.hwnd, win32con.WM_MOUSEMOVE, 0, win32api.MAKELONG(pos[0], pos[1]))
+            time.sleep(0.01)

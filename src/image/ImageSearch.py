@@ -1,6 +1,7 @@
 import cv2
-import numpy
 import numpy as np
+
+from src.image.Image import read_img
 
 """
 sift算法匹配
@@ -71,7 +72,7 @@ def best_match(search_pic, template_pic, threshold, debug=False):
     :param debug:
     :param search_pic:
     :param template_pic:
-    :return:
+    :return: x,y的元组
     """
     # search_pic = cv2.imread(search_pic)
     # template_pic = cv2.imread(template_pic,0)
@@ -97,29 +98,8 @@ def best_match(search_pic, template_pic, threshold, debug=False):
             cv2.imshow('Detected', search_pic)
             cv2.waitKey(0)
             cv2.destroyAllWindows()
-        return left_top, right_bottom
-    elif left_top[0] == 0 and left_top[1] == 0:
-        raise Exception("截取屏幕失败")
-    return None, None
-
-
-def get_img_opencv(screenshot_bytes, _width, _height, debug=False):
-    im_opencv = numpy.frombuffer(screenshot_bytes, dtype='uint8')
-    im_opencv.shape = (_height, _width, 4)
-    if im_opencv.max == 0 and im_opencv.min == 0:
-        raise Exception("截取屏幕失败")
-    if debug:
-        cv2.imshow('Detected', im_opencv)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-    return im_opencv
-
-
-def read_img(template_pic, flag=-1):
-    if flag == -1:
-        return cv2.imread(template_pic)
-    else:
-        return cv2.imread(template_pic, 0)
+        return [left_top, right_bottom]
+    return None
 
 
 def lookup_pos(template_pic, search_pic):
@@ -155,6 +135,3 @@ def lookup_pos(template_pic, search_pic):
     cv2.destroyAllWindows()
     return num, w, h, pos_list
 
-
-if __name__ == '__main__':
-    best_match(read_img(u"../../resource/img/im_opencv.jpg"), read_img(u"../../resource/img/tansuo.png", 0))
