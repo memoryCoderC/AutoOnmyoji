@@ -1,3 +1,4 @@
+# coding=utf-8
 import time
 
 from src.game.GameBase import BaseOperator
