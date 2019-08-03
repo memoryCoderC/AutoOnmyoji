@@ -1,8 +1,6 @@
 import cv2
 import numpy as np
 
-from src.image.Image import read_img
-
 """
 sift算法匹配
 """
@@ -40,29 +38,52 @@ def siftImageAlignment(img1, img2):
     return img_out, H, status
 
 
-def mutl_match(search_pic, template_pic, threshold, debug=False):
+def get_len(pos1, pos2):
+    x = pos1[0] - pos2[0]
+    y = pos1[1] - pos2[1]
+    import math
+    return math.sqrt((x ** 2) + (y ** 2))
+
+
+def filter_close(list, distance):
+    result = list.copy()
+    for i in range(0, len(list) - 1):
+        for j in range(i + 1, len(list)):
+            pos1 = list[i][0]
+            pos2 = list[j][0]
+            if get_len(pos1, pos2) < distance:
+                result.remove(list[i])
+    return result
+
+
+def mutl_match(search_pic, template_pic, threshold, distance=5, debug=False):
     """
     图像搜索，在目标图上找到相似的指定图片,多图像匹配
+    :param distance:
     :param debug:
     :param search_pic:
     :param template_pic:
     :param threshold:
     :return:
     """
-    img_rgb = cv2.imread(search_pic)
-    img_gray = cv2.cvtColor(img_rgb, cv2.COLOR_BGR2GRAY)
-    template = cv2.imread(template_pic, 0)
-    w, h = template.shape[::-1]  # rows->h, cols->w
+    list = []
+    img_gray = cv2.cvtColor(search_pic, cv2.COLOR_BGR2GRAY)
+    w, h = template_pic.shape[::-1]  # rows->h, cols->w
     # 相关系数匹配方法：cv2.TM_CCOEFF
-    res = cv2.matchTemplate(img_gray, template, cv2.TM_CCOEFF_NORMED)
+    res = cv2.matchTemplate(img_gray, template_pic, cv2.TM_CCOEFF_NORMED)
     loc = np.where(res >= threshold)  # 匹配程度大于%80的坐标y,x
+    pos = [-10, -10]
     for pt in zip(*loc[::-1]):  # *号表示可选参数
-        cv2.rectangle(img_rgb, pt, (pt[0] + w, pt[1] + h), (7, 249, 151), 2)
+        if get_len(pos, pt) > distance:
+            list.append([pt, (pt[0] + w, pt[1] + h)])
+            if debug:
+                cv2.rectangle(search_pic, pt, (pt[0] + w, pt[1] + h), (7, 249, 151), 2)
+        pos = pt
     if debug:
-        cv2.imshow('Detected', img_rgb)
+        cv2.imshow('Detected', search_pic)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
-    return
+    return filter_close(list, distance)
 
 
 def best_match(search_pic, template_pic, threshold, debug=False):
@@ -96,6 +117,7 @@ def best_match(search_pic, template_pic, threshold, debug=False):
         if debug:
             cv2.rectangle(search_pic, left_top, right_bottom, 255, 2)  # 画出矩形位置
             cv2.imshow('Detected', search_pic)
+            cv2.imwrite("Copy.jpg", search_pic)
             cv2.waitKey(0)
             cv2.destroyAllWindows()
         return [left_top, right_bottom]
@@ -134,4 +156,3 @@ def lookup_pos(template_pic, search_pic):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
     return num, w, h, pos_list
-

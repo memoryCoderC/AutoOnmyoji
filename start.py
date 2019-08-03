@@ -8,6 +8,7 @@ if __name__ == '__main__':
     default_window_height = 679
     windowTitle = "阴阳师-网易游戏"
     window = Window(windowTitle)
+    print(window.get_window_rect())
     probe = Probe(window)
     probe.battle()
 

@@ -2,6 +2,7 @@
 import random
 import time
 
+import pyautogui
 import win32api
 import win32con
 import win32gui
@@ -97,18 +98,15 @@ class Window:
         # cv2.destroyAllWindows()
 
     def mouse_active(self):
-        win32api.SendMessage(self.hwnd, win32con.WM_MOUSEACTIVATE, 68, None)  # 起作用
+        win32api.SendMessage(self.hwnd, win32con.WM_SETFOCUS)  # 起作用
+        win32api.SendMessage(self.hwnd, win32con.WM_NCMBUTTONDOWN)  # 起作用
 
     def click(self, x, y):
+        print('点击-%s,-%s' % (x, y))
         long_position = win32api.MAKELONG(x, y)
-        time.sleep(0.05)
-        # win32gui.SendMessage(self.hwnd, win32con.WM_MOUSEACTIVATE, win32con.WM_LBUTTONDOWN, long_position)
-        # win32gui.PostMessage(self.hwnd, win32con.WM_MOUSEMOVE, 0, long_position)
-        win32api.PostMessage(self.hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, long_position)
-        time.sleep(0.05)  # 上下行代码不起作用（或者说是没有效果）
-        win32api.PostMessage(self.hwnd, win32con.WM_LBUTTONUP, win32con.MK_LBUTTON, long_position)
-        time.sleep(0.05)
-        win32api.PostMessage(self.hwnd, win32con.WM_KEYFIRST, 68, None)  # 起作用
+        win32gui.PostMessage(self.hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, long_position)
+        # time.sleep(0.1)  # 上下行代码不起作用（或者说是没有效果）
+        win32gui.PostMessage(self.hwnd, win32con.WM_LBUTTONUP, win32con.MK_LBUTTON, long_position)
 
     def click_range(self, left_top, right_bottom):
         x = random.randint(left_top[0], right_bottom[0])
@@ -140,6 +138,8 @@ class Window:
             :param pos1: (x,y) 起点坐标
             :param pos2: (x,y) 终点坐标
         """
+        win32api.PostMessage(self.hwnd, win32con.WM_CAPTURECHANGED, win32con.MK_LBUTTON,
+                             win32api.MAKELONG(pos1[0], pos1[1]))
         step_width_list = []
         step_height_list = []
         step_list = []
