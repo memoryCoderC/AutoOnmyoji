@@ -2,8 +2,11 @@ import random
 
 from src.game.Probe import Probe
 from src.system.Window import Window
+from src.util import permissionUtil
 
 if __name__ == '__main__':
+    print("run")
+    permissionUtil.check_get_permission()
     default_window_width = 1152
     default_window_height = 679
     windowTitle = "阴阳师-网易游戏"

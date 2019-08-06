@@ -76,7 +76,7 @@ class BaseOperator:
 
     def wait_img(self, img_path, max_time=30):
         """
-        等待游戏图像并点击
+        等待游戏图像
             :param max_time:
             :param self:
             :param img_path:
@@ -92,7 +92,7 @@ class BaseOperator:
 
     def wait_img_click(self, img_path, max_time=30):
         """
-        等待游戏图像
+        等待游戏图像并点击
             :param max_time:
             :param self:
             :param img_path:
