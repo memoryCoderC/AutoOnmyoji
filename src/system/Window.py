@@ -6,7 +6,7 @@ import win32con
 from win32api import MAKELONG
 from win32gui import FindWindow, GetWindowRect, GetWindowDC, DeleteObject, ReleaseDC, PostMessage, \
     SendMessage
-from win32ui import CreateDCFromHandle, CreateBitmap
+from win32ui import CreateDCFromHandle, CreateBitmap, GetForegroundWindow
 
 from src.image import Image
 from src.util.log import logger
@@ -17,12 +17,18 @@ from src.util.log import logger
 
 
 class Window:
-    def __init__(self, window_title):
-        self.window_title = window_title
-        self.hwnd = FindWindow(win32con.NULL, self.window_title)
-        if self.hwnd == 0:
-            raise Exception("未找到该名称的窗口句柄")
-        logger.info("窗口加载成功")
+    @staticmethod
+    def get_foreground_window_when_loss():
+        return GetForegroundWindow()
+
+    def __init__(self, window):
+        if isinstance(window, str):
+            self.hwnd = FindWindow(win32con.NULL, window)
+            if self.hwnd == 0:
+                raise Exception("未找到该名称的窗口句柄")
+            logger.info("窗口加载成功")
+        else:
+            self.hwnd = window
 
     def get_window_rect(self):
         return GetWindowRect(self.hwnd)

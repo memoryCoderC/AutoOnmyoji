@@ -69,7 +69,6 @@ def mutl_match(search_pic, template_pic, threshold, distance=5, debug=False):
     :param threshold:
     :return:
     """
-    logger.info("进行多图查找")
     list = []
     img_gray = cvtColor(search_pic, COLOR_BGR2GRAY)
     w, h = template_pic.shape[::-1]  # rows->h, cols->w
@@ -87,10 +86,7 @@ def mutl_match(search_pic, template_pic, threshold, distance=5, debug=False):
         imshow('Detected', search_pic)
         waitKey(0)
         destroyAllWindows()
-    list = filter_close(list, distance)
-    i = len(list)
-    logger.info("多图找到" + str(i))
-    return list
+    return filter_close(list, distance)
 
 
 def best_match(search_pic, template_pic, threshold, debug=False):
@@ -104,7 +100,6 @@ def best_match(search_pic, template_pic, threshold, debug=False):
     """
     # search_pic = imread(search_pic)
     # template_pic = imread(template_pic,0)
-    logger.info("进行单图查找")
     img_gray = cvtColor(search_pic, COLOR_BGR2GRAY)
     w, h = template_pic.shape[::-1]  # rows->h, cols->w
     # 相关系数匹配方法：TM_CCOEFF
@@ -122,7 +117,6 @@ def best_match(search_pic, template_pic, threshold, debug=False):
     left_top = max_loc  # 左上角
     if max_val > threshold:
         right_bottom = (left_top[0] + w, left_top[1] + h)  # 右下角
-        logger.info("进行单图查找")
         if debug:
             rectangle(search_pic, left_top, right_bottom, 255, 2)  # 画出矩形位置
             imshow('Detected', search_pic)

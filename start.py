@@ -1,5 +1,5 @@
 # coding=utf-8
-
+from src.game import config
 from src.game.Probe import Probe
 from src.system.Window import Window
 from src.util import permissionUtil
@@ -11,8 +11,7 @@ if __name__ == '__main__':
         logger.info("开始运行")
         permissionUtil.check_get_permission()
         logger.info("权限判断结束")
-        windowTitle = "阴阳师-网易游戏"
-        window = Window(windowTitle)
+        window = Window(config.get("windowTitle"))
         probe = Probe(window)
         probe.battle()
     except Exception as e:

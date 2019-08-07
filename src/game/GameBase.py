@@ -2,7 +2,9 @@
 from abc import abstractmethod
 from random import randint
 from time import time, sleep
+
 from PIL.Image import fromarray
+
 from src.image import Image
 from src.image.ImageSearch import best_match, mutl_match
 from src.util.log import logger
@@ -22,16 +24,21 @@ class BaseOperator:
     def mouse_move(self, pos1, pos2):
         self.window.mouse_move(pos1, pos2)
 
-    def check_sense(self, template_img_path):
+    def check_sense(self, template_img_paths):
         """
         检查当前场景是否存在图片
-        :param template_img_path:要查找的图片位置
+        :param template_img_paths:要查找的图片位置
         :return: 成功返回True，失败返回False
         """
-        pos = self.screenshot_find(template_img_path)
-        if pos is not None:
-            return True
-        return False
+        screenshot = self.screenshot()
+        screenshot_height, screenshot_width = screenshot.shape[:2]
+        zoom = screenshot_width / default_window_width  # 计算缩放比例
+        for i in range(0, len(template_img_paths)):
+            template_img = Image.read_img(template_img_paths[i], 0)
+            pos = self.search_img_zoom(template_img, screenshot, zoom)
+            if pos is not None:
+                return [i, pos, template_img_paths[i]]
+        return None
 
     def click_img(self, template_img_path, center=False):
         """
@@ -74,6 +81,19 @@ class BaseOperator:
         template_img = Image.resize_by_zoom(zoom, template_img)
         return mutl_match(target_img, template_img, 0.9)
 
+    def wait_senses(self, sense_paths, max_time=30):
+        """
+        等待多个图片，返回检测到的数组下标
+        :return:
+        """
+        start_time = time()
+        while time() - start_time <= max_time:
+            sleep(1)
+            pos = self.check_sense(sense_paths)
+            if pos is not None:
+                return pos
+        return None
+
     def wait_img(self, img_path, max_time=30):
         """
         等待游戏图像
@@ -100,7 +120,6 @@ class BaseOperator:
             :param img_path:
             :return: 成功返回图片位置[left_top,right_bottom]，失败返回None
         """
-
         pos = self.wait_img(img_path, max_time)
         if pos is not None:
             self.window.click_range(pos[0], pos[1])
