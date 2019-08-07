@@ -1,13 +1,14 @@
 # coding=utf-8
-import random
-import time
 from abc import abstractmethod
-
-import PIL.Image as PILImage
-
+from random import randint
+from time import time, sleep
+from PIL.Image import fromarray
 from src.image import Image
 from src.image.ImageSearch import best_match, mutl_match
-from src.system import Window
+from src.util.log import logger
+
+default_window_width = 1152
+default_window_height = 679
 
 
 class BaseOperator:
@@ -35,16 +36,14 @@ class BaseOperator:
     def click_img(self, template_img_path, center=False):
         """
         点击图片
+        :param center:
         :param template_img_path:要点击的图片
         :return:
         """
         pos = self.screenshot_find(template_img_path)
         if pos is not None:
-            print(pos[0], pos[1])
             pos[0] = (pos[0][0] - 8, pos[0][1] - 35)
             pos[1] = (pos[1][0] - 8, pos[1][1] - 35)
-            print('左上-%s,%s' % pos[0])
-            print('右下-%s,%s' % pos[1])
         if center:
             x = int((pos[1][0] + pos[0][0]) / 2)
             y = int((pos[1][1] + pos[0][1]) / 2)
@@ -83,12 +82,14 @@ class BaseOperator:
             :param img_path:
             :return: 成功返回图片位置[left_top,right_bottom]，失败返回None
         """
-        start_time = time.time()
-        while time.time() - start_time <= max_time:
-            time.sleep(1)
+        logger.info("等待游戏图像")
+        start_time = time()
+        while time() - start_time <= max_time:
+            sleep(0.1)
             pos = self.screenshot_find(img_path)
             if pos is not None:
                 return pos
+        logger.info("等待图像失败")
         return None
 
     def wait_img_click(self, img_path, max_time=30):
@@ -99,6 +100,7 @@ class BaseOperator:
             :param img_path:
             :return: 成功返回图片位置[left_top,right_bottom]，失败返回None
         """
+
         pos = self.wait_img(img_path, max_time)
         if pos is not None:
             self.window.click_range(pos[0], pos[1])
@@ -123,8 +125,7 @@ class BaseOperator:
         screenshot = self.window.hwd_screenshot()
         screenshot_height, screenshot_width = screenshot.shape[:2]
         template_img = Image.read_img(template_img_path, 0)
-        zoom = screenshot_width / Window.default_window_width  # 计算缩放比例
-        # print('缩放-%s' % zoom)
+        zoom = screenshot_width / default_window_width  # 计算缩放比例
         return self.search_img_zoom(template_img, screenshot, zoom)
 
     def screenshot_mutlfind(self, template_img_path):
@@ -136,7 +137,7 @@ class BaseOperator:
         screenshot = self.window.hwd_screenshot()
         screenshot_height, screenshot_width = screenshot.shape[:2]
         template_img = Image.read_img(template_img_path, 0)
-        zoom = screenshot_width / Window.default_window_width  # 计算缩放比例
+        zoom = screenshot_width / default_window_width  # 计算缩放比例
         return self.search_mutlimg_zoom(template_img, screenshot, zoom)
 
     def screenshot(self):
@@ -148,8 +149,8 @@ class BaseOperator:
 
     def random_pos(self):
         _width, _height = self.window_size()
-        x = random.randint(10, _width)
-        y = random.randint(10, _height)
+        x = randint(10, _width)
+        y = randint(10, _height)
         return [x, y]
 
     def window_size(self):
@@ -172,7 +173,7 @@ class BaseOperator:
         """
         screenshot = self.window.hwd_screenshot()
         height, width = screenshot.shape[:2]
-        img = PILImage.fromarray(screenshot, 'RGB')
+        img = fromarray(screenshot, 'RGB')
         r1, g1, b1 = color[:3]
         for x in range(width):
             for y in range(height):
@@ -191,12 +192,12 @@ class BaseOperator:
             :param color: (r,g,b) 欲等待的颜色
             :return: 成功返回True，失败返回False
         """
-        start_time = time.time()
-        while time.time() - start_time <= max_time:
+        start_time = time()
+        while time() - start_time <= max_time:
             pos = self.find_color(region, color, tolerance)
             if pos is not None:
                 return True
-            time.sleep(1)
+            sleep(1)
         else:
             return False
 

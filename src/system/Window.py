@@ -2,29 +2,30 @@
 import random
 import time
 
-import win32api
 import win32con
-import win32gui
-import win32ui
+from win32api import MAKELONG
+from win32gui import FindWindow, GetWindowRect, GetWindowDC, DeleteObject, ReleaseDC, PostMessage, \
+    SendMessage
+from win32ui import CreateDCFromHandle, CreateBitmap
 
 from src.image import Image
+from src.util.log import logger
 
 """
 用于获取windows窗口信息
 """
-default_window_width = 1152
-default_window_height = 679
 
 
 class Window:
     def __init__(self, window_title):
         self.window_title = window_title
-        self.hwnd = win32gui.FindWindow(win32con.NULL, self.window_title)
+        self.hwnd = FindWindow(win32con.NULL, self.window_title)
         if self.hwnd == 0:
             raise Exception("未找到该名称的窗口句柄")
+        logger.info("窗口加载成功")
 
     def get_window_rect(self):
-        return win32gui.GetWindowRect(self.hwnd)
+        return GetWindowRect(self.hwnd)
 
     def get_hwnd(self):
         return self.hwnd
@@ -36,13 +37,13 @@ class Window:
             _width = _right - _left
             _height = _bot - _top
             # 返回句柄窗口的设备环境，覆盖整个窗口，包括非客户区，标题栏，菜单，边框
-            _hwnd_dc = win32gui.GetWindowDC(self.hwnd)
+            _hwnd_dc = GetWindowDC(self.hwnd)
             # 创建设备描述表
-            _mfc_dc = win32ui.CreateDCFromHandle(_hwnd_dc)
+            _mfc_dc = CreateDCFromHandle(_hwnd_dc)
             # 创建内存设备描述表
             _save_dc = _mfc_dc.CreateCompatibleDC()
             # 创建位图对象准备保存图片
-            _save_bit_map = win32ui.CreateBitmap()
+            _save_bit_map = CreateBitmap()
             # 为bitmap开辟存储空间
             _save_bit_map.CreateCompatibleBitmap(_mfc_dc, _width, _height)
             # 将截图保存到saveBitMap中
@@ -75,10 +76,10 @@ class Window:
             ##方法三（后续转第二部分）
         finally:
             # 内存释放
-            win32gui.DeleteObject(_save_bit_map.GetHandle())
+            DeleteObject(_save_bit_map.GetHandle())
             _save_dc.DeleteDC()
             _mfc_dc.DeleteDC()
-            win32gui.ReleaseDC(self.hwnd, _hwnd_dc)
+            ReleaseDC(self.hwnd, _hwnd_dc)
 
         ##方法二（第二部分）：PIL保存
         ###PrintWindow成功,保存到文件,显示到屏幕
@@ -97,15 +98,14 @@ class Window:
         # cv2.destroyAllWindows()
 
     def mouse_active(self):
-        win32api.SendMessage(self.hwnd, win32con.WM_SETFOCUS)  # 起作用
-        win32api.SendMessage(self.hwnd, win32con.WM_NCMBUTTONDOWN)  # 起作用
+        SendMessage(self.hwnd, win32con.WM_SETFOCUS)  # 起作用
+        SendMessage(self.hwnd, win32con.WM_NCMBUTTONDOWN)  # 起作用
 
     def click(self, x, y):
-        print('点击-%s,-%s' % (x, y))
-        long_position = win32api.MAKELONG(x, y)
-        win32gui.PostMessage(self.hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, long_position)
-        # time.sleep(0.1)  # 上下行代码不起作用（或者说是没有效果）
-        win32gui.PostMessage(self.hwnd, win32con.WM_LBUTTONUP, win32con.MK_LBUTTON, long_position)
+        logger.info('点击-%s,%s' % (x, y))
+        long_position = MAKELONG(x, y)
+        PostMessage(self.hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, long_position)
+        PostMessage(self.hwnd, win32con.WM_LBUTTONUP, win32con.MK_LBUTTON, long_position)
 
     def click_range(self, left_top, right_bottom):
         x = random.randint(left_top[0], right_bottom[0])
@@ -122,13 +122,13 @@ class Window:
         import numpy
         move_x = numpy.linspace(pos1[0], pos2[0], num=20, endpoint=True)[0:]
         move_y = numpy.linspace(pos1[1], pos2[1], num=20, endpoint=True)[0:]
-        win32gui.SendMessage(self.hwnd, win32con.WM_LBUTTONDOWN, 0, win32api.MAKELONG(pos1[0], pos1[1]))
+        SendMessage(self.hwnd, win32con.WM_LBUTTONDOWN, 0, MAKELONG(pos1[0], pos1[1]))
         for i in range(20):
             x = int(round(move_x[i]))
             y = int(round(move_y[i]))
-            win32gui.SendMessage(self.hwnd, win32con.WM_MOUSEMOVE, 0, win32api.MAKELONG(x, y))
+            SendMessage(self.hwnd, win32con.WM_MOUSEMOVE, 0, MAKELONG(x, y))
             time.sleep(0.01)
-        win32gui.SendMessage(self.hwnd, win32con.WM_LBUTTONUP, 0, win32api.MAKELONG(pos2[0], pos2[1]))
+        SendMessage(self.hwnd, win32con.WM_LBUTTONUP, 0, MAKELONG(pos2[0], pos2[1]))
 
     def mouse_move(self, pos1, pos2):
         """
@@ -137,8 +137,8 @@ class Window:
             :param pos1: (x,y) 起点坐标
             :param pos2: (x,y) 终点坐标
         """
-        win32api.PostMessage(self.hwnd, win32con.WM_CAPTURECHANGED, win32con.MK_LBUTTON,
-                             win32api.MAKELONG(pos1[0], pos1[1]))
+        PostMessage(self.hwnd, win32con.WM_CAPTURECHANGED, win32con.MK_LBUTTON,
+                    MAKELONG(pos1[0], pos1[1]))
         step_width_list = []
         step_height_list = []
         step_list = []
@@ -170,5 +170,5 @@ class Window:
                 else:
                     step_list.append([step_width_list[i], pos2[1]])
         for pos in step_list:
-            win32gui.SendMessage(self.hwnd, win32con.WM_MOUSEMOVE, 0, win32api.MAKELONG(pos[0], pos[1]))
+            SendMessage(self.hwnd, win32con.WM_MOUSEMOVE, 0, MAKELONG(pos[0], pos[1]))
             time.sleep(0.01)

@@ -1,9 +1,10 @@
-import ctypes, sys
+from ctypes import windll
+from sys import executable, version_info
 
 
 def is_admin():
     try:
-        return ctypes.windll.shell32.IsUserAnAdmin()
+        return windll.shell32.IsUserAnAdmin()
     except:
         return False
 
@@ -16,8 +17,9 @@ def check_get_permission():
 
 
 def apply_permission():
-    if sys.version_info[0] == 3:
-        ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, __file__, None, 1)
+    if version_info[0] == 3:
+        windll.shell32.ShellExecuteW(None, "runas", executable, __file__, None, 1)
     else:  # in python2.x
         from numpy import unicode
-        ctypes.windll.shell32.ShellExecuteW(None, u"runas", unicode(sys.executable), unicode(__file__), None, 1)
+        windll.shell32.ShellExecuteW(None, u"runas", unicode(executable), unicode(__file__), None, 1)
+    exit(0)

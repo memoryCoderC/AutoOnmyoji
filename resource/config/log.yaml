@@ -15,6 +15,7 @@ handlers:
     formatter: simple
     level: DEBUG
     filename: conosole.log
+    encoding: utf8
   error:
     class: logging.handlers.RotatingFileHandler
     level: ERROR

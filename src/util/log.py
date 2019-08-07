@@ -1,33 +1,35 @@
 import logging
 import logging.config
-import os
-from ctypes import windll
-import yaml
+from os.path import exists
+
+from yaml import load, FullLoader
 
 
-def setup_logging(default_path='default', default_level=logging.INFO):
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    log_dir = r'\resource\config\log.yaml'
-    if default_path == 'default':
-        log_dir = base_dir + log_dir
-    if os.path.exists(log_dir):
-        with open(log_dir, 'r', encoding='utf-8') as f:
-            config = yaml.load(f, Loader=yaml.FullLoader)
-            logging.config.dictConfig(config)
-    else:
-        logging.basicConfig(level=default_level)
+class logger:
+    @classmethod
+    def info(cls, msg, *args, **kwargs):
+        cls.log.info(msg, *args, **kwargs)
 
+    @classmethod
+    def warning(cls, msg, *args, **kwargs):
+        cls.log.warning(msg, *args, **kwargs)
 
-setup_logging()
+    @classmethod
+    def error(cls, msg, *args, **kwargs):
+        cls.log.error(msg, *args, **kwargs)
 
-if __name__ == '__main__':
-    user32 = windll.user32
-    user32.SetProcessDPIAware()
-    # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-    logging.debug('Start')
-    logging.info('Exec')
-    logging.info('Finished')
-    try:
-        print(1 / 0)
-    except Exception as e:
-        logging.exception(e, exc_info=True)
+    def setup_logging(log_path='default', default_level=logging.INFO):
+        log_dir = r'resource\config\log.yaml'
+        if log_path == 'default':
+            log_dir = log_dir
+        else:
+            log_dir = log_path
+        if exists(log_dir):
+            with open(log_dir, 'r', encoding='utf-8') as f:
+                config = load(f, Loader=FullLoader)
+                logging.config.dictConfig(config)
+        else:
+            logging.basicConfig(level=default_level)
+
+    setup_logging()
+    log = logging.getLogger()
