@@ -359,3 +359,22 @@ class BaseOperator:
                     logger.info("需要点击默认邀请")
                     sleep(0.5)
                     self.click_img(u"resource/img/okButton.png", True)
+
+    def wait_teammate(self, img_path, teammates_number, max_time=30 * 1000):
+        """
+        等待游戏图像并点击
+            :param teammates_number:
+            :param max_time:
+            :param self:
+            :param img_path:
+            :return: 成功返回图片位置[left_top,right_bottom]，失败返回None
+        """
+        logger.info("检查队友")
+        start_time = time()
+        while time() - start_time <= max_time:
+            sleep(1)
+            pos = self.screenshot_mutlfind(img_path)
+            if len(pos) <= 2 - teammates_number:
+                return pos
+            logger.info("等待队友中...")
+        return None
