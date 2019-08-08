@@ -58,7 +58,7 @@ class BaseOperator:
             else:
                 self.window.click_range(pos[0], pos[1])
         else:
-            logger.info("点击图片失败，未找到图片")
+            logger.info("点击图片失败，未找到图片" + template_img_path)
 
     def search_img_zoom(self, template_img, target_img, zoom):
         """
@@ -146,7 +146,7 @@ class BaseOperator:
             pos = self.screenshot_find(img_path)
             if pos is not None:
                 return pos
-        logger.info("等待图像失败")
+        logger.info("等待图像失败" + img_path)
         return None
 
     def wait_img_click(self, img_path, max_time=30):
@@ -273,31 +273,36 @@ class BaseOperator:
         else:
             return False
 
-    def battle(self, teammates_number):
+    def battle(self, teammates_number, captain=False):
         """
         战斗模块
         :return:
         """
-        logger.info("开始战斗")
-        if self.wait_img(u"resource/img/battleLeftTop.png") is not None:
+        if self.wait_img(u"resource/img/battleLeftTop.png", 120) is not None:
+            logger.info("进入战斗场景")
             """
             进入了战斗画面
             """
             self.click_ready()
         else:
-            raise Exception("开始战斗失败")
+            raise Exception("进入战斗场景失败")
         sleep(0.5)
         logger.info("等待战斗结束")
-        pos = self.wait_senses([u"resource/img/win.png", u"resource/img/fail.png"], 240)
-        if pos is not None:
-            if pos[0] == 0:
-                logger.info("战斗胜利")
-                self.win_deal(teammates_number)
-            elif pos[0] == 1:
-                logger.info("战斗失败")
-                self.fail_deal(teammates_number)
-        else:
-            raise Exception("失败")
+        while True:
+            pos = self.check_sense([u"resource/img/win.png", u"resource/img/fail.png", u"resource/img/guihuo.png"])
+            if pos is not None:
+                if pos[0] == 0:
+                    logger.info("战斗胜利")
+                    self.win_deal(teammates_number, captain)
+                    break
+                elif pos[0] == 1:
+                    logger.info("战斗失败")
+                    self.fail_deal(teammates_number, captain)
+                    break
+                elif pos[0] == 2:
+                    logger.debug("战斗中...")
+            else:
+                raise Exception("未知战斗场景")
 
     def click_ready(self):
         """
@@ -308,7 +313,7 @@ class BaseOperator:
         start_time = time()
         while time() - start_time <= max_time:
             sleep(0.1)
-            pos = self.check_sense([u"resource/img/needBegin.png", u"resource/img/auto.png"])
+            pos = self.check_sense([u"resource/img/needBegin.png", u"resource/img/guihuo.png"])
             if pos is not None:
                 if pos[0] == 0:
                     ready_sense = self.check_sense([u"resource/img/btn_ready.png", u"resource/img/readyed.png"])
@@ -318,43 +323,52 @@ class BaseOperator:
                             self.click_img(u"resource/img/btn_ready.png")
                         elif ready_sense[0] == 1:
                             logger.info("等待队友准备")
-                else:
+                elif pos[0] == 1:
                     logger.info("战斗已经开始")
+                    auto_sense = self.check_sense([u"resource/img/auto.png", u"resource/img/manual.png"])
+                    if auto_sense[0] == 0:
+                        logger.debug("已经自动战斗")
+                    elif auto_sense[0] == 1:
+                        logger.debug("开启自动战斗")
+                        self.wait_img_click(u"resource/img/manual.png", 1)
                     return
 
-    def win_deal(self, teammates_number):
+    def win_deal(self, teammates_number, captain):
         """
         战斗成功处理
         :return:
         """
-        self.click_img(u"resource/img/win.png")
-        sleep(0.5)
-        self.wait_img_click(u"resource/img/battleData.png")
-        for i in range(3):
-            sleep(1)
-            window_size = self.window_size()
-            self.click_range((50, 50), (int(window_size[0] / 5), window_size[1] - 50))
+        # for i in range(4):
+        #     if self.screenshot_find(u"resource/img/battleData.png") is not None:
+        #         window_size = self.window_size()
+        #         self.click_range((100, int(window_size[1] / 2)),
+        #                          (int(window_size[0] / 6), 3 * int(window_size[1] / 4)))
+        #         sleep(1)
+        if self.screenshot_find(u"resource/img/battleData.png") is not None:
+            while self.screenshot_find(u"resource/img/clickToContinue.png") is not None:
+                self.click_img(u"resource/img/clickToContinue.png")
+                sleep(1)
         if teammates_number > 0:
-            if self.wait_img(u"resource/img/inviteDefatlt.png", 5) is not None:
+            if captain and self.wait_img(u"resource/img/inviteDefatlt.png", 3) is not None:
                 logger.info("需要点击默认邀请")
                 sleep(0.5)
-                mode = config.getboolean("game", "inviteDefaultMode")
-                if mode:
+                if config.getboolean("game", "inviteDefaultMode"):
                     logger.info("默认邀请队友")
                     self.click_img(u"resource/img/check.png", True)
                 sleep(0.5)
                 logger.info("邀请队友")
                 self.click_img(u"resource/img/okButton.png", True)
 
-    def fail_deal(self, teammates_number):
+    def fail_deal(self, teammates_number, captain):
         """
         战斗失败处理
         :return:
         """
         self.click_img(u"resource/img/fail.png")
-        if teammates_number > 0:
+        if teammates_number > 0 and captain:
             sleep(1)
             if self.screenshot_find(u"resource/img/battleData.png") is not None:
+                logger.info("等待邀请画面")
                 if self.wait_img(u"resource/img/inviteDefatlt.png", 5) is not None:
                     logger.info("需要点击默认邀请")
                     sleep(0.5)

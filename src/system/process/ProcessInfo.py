@@ -31,4 +31,3 @@ def is_running(process_name):
 
 if __name__ == '__main__':
     is_running("onmyoji.exe")
-

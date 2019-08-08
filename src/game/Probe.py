@@ -13,6 +13,7 @@ class Probe(BaseOperator):
 
     def __init__(self, window):
         super().__init__(window)
+        self.captain = False
         self.window = window
         self.count = 0
 
@@ -24,11 +25,10 @@ class Probe(BaseOperator):
             pos1 = pos2
             sleep(1)
 
-
-
-    def begin_battle(self, teammates_number):
+    def begin_battle(self):
         probe_count = config.getint("game", "probeCount")
         while probe_count == 0 or self.count < probe_count:
+            teammates_number = config.getint("game", "teammatesNum")
             if self.wait_img(u"resource/img/yuhunTeam.png", 60) is not None:
                 if teammates_number > 0:
                     if self.wait_teammate(u"resource/img/invite.png", teammates_number, 60) is not None:
@@ -36,11 +36,12 @@ class Probe(BaseOperator):
                     else:
                         logger.error("等待队友失败")
                 sleep(0.5)
-                logger.info("点击开始战斗")
-                self.click_img(u"resource/img/battleBegin.png")
+                if self.screenshot_find(u"resource/img/battleBegin.png") is not None:
+                    logger.info("身为队长,点击开始战斗")
+                    self.captain = True
+                    self.click_img(u"resource/img/battleBegin.png")
                 self.count = self.count + 1
                 logger.info("第" + str(self.count) + "次御魂")
-                self.battle(teammates_number)
-
+                self.battle(teammates_number, self.captain)
             else:
                 logger.error("进入组队页面失败")
