@@ -139,7 +139,7 @@ class BaseOperator:
             :param img_path:
             :return: 成功返回图片位置[left_top,right_bottom]，失败返回None
         """
-        logger.info("等待游戏图像")
+        logger.debug("等待游戏图像")
         start_time = time()
         while time() - start_time <= max_time:
             sleep(0.1)
@@ -273,7 +273,7 @@ class BaseOperator:
         else:
             return False
 
-    def battle(self):
+    def battle(self, teammates_number):
         """
         战斗模块
         :return:
@@ -292,10 +292,10 @@ class BaseOperator:
         if pos is not None:
             if pos[0] == 0:
                 logger.info("战斗胜利")
-                self.win_deal()
+                self.win_deal(teammates_number)
             elif pos[0] == 1:
                 logger.info("战斗失败")
-                self.fail_deal()
+                self.fail_deal(teammates_number)
         else:
             raise Exception("失败")
 
@@ -322,7 +322,7 @@ class BaseOperator:
                     logger.info("战斗已经开始")
                     return
 
-    def win_deal(self):
+    def win_deal(self, teammates_number):
         """
         战斗成功处理
         :return:
@@ -334,26 +334,28 @@ class BaseOperator:
             sleep(1)
             window_size = self.window_size()
             self.click_range((50, 50), (int(window_size[0] / 5), window_size[1] - 50))
-        if self.wait_img(u"resource/img/inviteDefatlt.png", 5) is not None:
-            logger.info("需要点击默认邀请")
-            sleep(0.5)
-            mode = config.getboolean("game", "inviteDefaultMode")
-            if mode:
-                logger.info("默认邀请队友")
-                self.click_img(u"resource/img/check.png", True)
-            sleep(0.5)
-            logger.info("邀请队友")
-            self.click_img(u"resource/img/okButton.png", True)
+        if teammates_number > 0:
+            if self.wait_img(u"resource/img/inviteDefatlt.png", 5) is not None:
+                logger.info("需要点击默认邀请")
+                sleep(0.5)
+                mode = config.getboolean("game", "inviteDefaultMode")
+                if mode:
+                    logger.info("默认邀请队友")
+                    self.click_img(u"resource/img/check.png", True)
+                sleep(0.5)
+                logger.info("邀请队友")
+                self.click_img(u"resource/img/okButton.png", True)
 
-    def fail_deal(self):
+    def fail_deal(self, teammates_number):
         """
         战斗失败处理
         :return:
         """
         self.click_img(u"resource/img/fail.png")
-        sleep(1)
-        if self.screenshot_find(u"resource/img/battleData.png") is not None:
-            if self.wait_img(u"resource/img/inviteDefatlt.png", 5) is not None:
-                logger.info("需要点击默认邀请")
-                sleep(0.5)
-                self.click_img(u"resource/img/okButton.png", True)
+        if teammates_number > 0:
+            sleep(1)
+            if self.screenshot_find(u"resource/img/battleData.png") is not None:
+                if self.wait_img(u"resource/img/inviteDefatlt.png", 5) is not None:
+                    logger.info("需要点击默认邀请")
+                    sleep(0.5)
+                    self.click_img(u"resource/img/okButton.png", True)

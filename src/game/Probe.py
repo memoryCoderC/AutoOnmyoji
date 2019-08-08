@@ -24,9 +24,10 @@ class Probe(BaseOperator):
             pos1 = pos2
             sleep(1)
 
-    def wait_teammate(self, img_path, max_time=30 * 1000):
+    def wait_teammate(self, img_path, teammates_number, max_time=30 * 1000):
         """
         等待游戏图像并点击
+            :param teammates_number:
             :param max_time:
             :param self:
             :param img_path:
@@ -37,23 +38,26 @@ class Probe(BaseOperator):
         while time() - start_time <= max_time:
             sleep(1)
             pos = self.screenshot_mutlfind(img_path)
-            if len(pos) < 2:
+            if len(pos) <= 2 - teammates_number:
                 return pos
             logger.info("等待队友中...")
         return None
 
-    def begin_battle(self):
+    def begin_battle(self, teammates_number):
         probe_count = config.getint("game", "probeCount")
         while probe_count == 0 or self.count < probe_count:
             if self.wait_img(u"resource/img/yuhunTeam.png", 60) is not None:
-                if self.wait_teammate(u"resource/img/invite.png", 60) is not None:
-                    sleep(0.5)
-                    logger.info("点击开始战斗")
-                    self.click_img(u"resource/img/battleBegin.png")
-                    self.count = self.count + 1
-                    logger.info("第" + str(self.count) + "次御魂")
-                    self.battle()
-                else:
-                    logger.error("等待队友失败")
+                if teammates_number > 0:
+                    if self.wait_teammate(u"resource/img/invite.png", teammates_number, 60) is not None:
+                        logger.info("队友已就位")
+                    else:
+                        logger.error("等待队友失败")
+                sleep(0.5)
+                logger.info("点击开始战斗")
+                self.click_img(u"resource/img/battleBegin.png")
+                self.count = self.count + 1
+                logger.info("第" + str(self.count) + "次御魂")
+                self.battle(teammates_number)
+
             else:
                 logger.error("进入组队页面失败")

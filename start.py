@@ -13,6 +13,6 @@ if __name__ == '__main__':
         logger.info("权限判断结束")
         window = Window(config.get("game", "windowTitle"))
         probe = Probe(window)
-        probe.begin_battle()
+        probe.begin_battle(config.getint("game", "teammatesNum"))
     except Exception as e:
         logger.exception(e)
