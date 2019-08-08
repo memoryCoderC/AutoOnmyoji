@@ -1,9 +1,8 @@
 # coding=utf-8
-import _thread
-import logging
 from time import sleep, time
 
 from src.game.GameBase import BaseOperator
+from src.game.config import config
 from src.util.log import logger
 
 
@@ -33,6 +32,7 @@ class Probe(BaseOperator):
             :param img_path:
             :return: 成功返回图片位置[left_top,right_bottom]，失败返回None
         """
+        logger.info("检查队友")
         start_time = time()
         while time() - start_time <= max_time:
             sleep(1)
@@ -42,74 +42,18 @@ class Probe(BaseOperator):
             logger.info("等待队友中...")
         return None
 
-    def click_ready(self):
-        """
-        检测并点击开始按钮
-        :return:
-        """
-        max_time = 30
-        start_time = time()
-        while time() - start_time <= max_time:
-            sleep(1)
-            pos = self.check_sense([u"resource/img/needBegin.png", u"resource/img/auto.png"])
-            if pos is not None:
-                if pos[0] == 0:
-                    logger.info("点击ready按钮")
-                    self.wait_img_click(u"resource/img/btn_ready.png")
+    def begin_battle(self):
+        probe_count = config.getint("game", "probeCount")
+        while probe_count == 0 or self.count < probe_count:
+            if self.wait_img(u"resource/img/yuhunTeam.png", 60) is not None:
+                if self.wait_teammate(u"resource/img/invite.png", 60) is not None:
+                    sleep(0.5)
+                    logger.info("点击开始战斗")
+                    self.click_img(u"resource/img/battleBegin.png")
+                    self.count = self.count + 1
+                    logger.info("第" + str(self.count) + "次御魂")
+                    self.battle()
                 else:
-                    logger.info("战斗已经开始")
-                    return
-
-    def win_deal(self):
-        self.wait_img_click(u"resource/img/win.png", 240)
-        sleep(0.5)
-        self.wait_img_click(u"resource/img/battleData.png", 240)
-        for i in range(3):
-            sleep(1)
-            window_size = self.window_size()
-            self.click_range((50, 50), (int(window_size[0] / 5), window_size[1] - 50))
-        if self.wait_img(u"resource/img/inviteDefatlt.png", 5) is not None:
-            logging.info("需要点击默认邀请")
-            sleep(0.5)
-            self.click_img(u"resource/img/check.png", True)
-            sleep(0.5)
-            self.click_img(u"resource/img/okButton.png", True)
-
-    def fail_deal(self):
-        self.click_img(u"resource/img/fail.png")
-        sleep(0.5)
-        self.wait_img_click(u"resource/img/battleData.png", 240)
-        for i in range(3):
-            sleep(1)
-            window_size = self.window_size()
-            self.click_range((50, 50), (int(window_size[0] / 5), window_size[1] - 50))
-        if self.wait_img(u"resource/img/inviteDefatlt.png", 5) is not None:
-            logging.info("需要点击默认邀请")
-            sleep(0.5)
-            self.click_img(u"resource/img/check.png", True)
-            sleep(0.5)
-            self.click_img(u"resource/img/okButton.png", True)
-
-    def battle(self):
-        logger.info("开始战斗" + str(self.count))
-        while self.wait_img(u"resource/img/yuhunTeam.png", 60) is not None:
-            self.wait_teammate(u"resource/img/invite.png")
-            sleep(0.5)
-            self.click_img(u"resource/img/battleBegin.png")
-            if self.wait_img(u"resource/img/battleLeftTop.png") is not None:
-                """
-                进入了战斗画面
-                """
-                _thread.start_new_thread(self.click_ready, ())
+                    logger.error("等待队友失败")
             else:
-                raise Exception("开始战斗失败")
-            self.count = self.count + 1
-            sleep(0.5)
-            pos = self.wait_senses([u"resource/img/win.png", u"resource/img/fail.png"], 240)
-            if pos is not None:
-                if pos[0] == 0:
-                    logger.info("战斗胜利")
-                    self.win_deal()
-                elif pos[0] == 1:
-                    logger.info("战斗失败")
-                    self.fail_deal()
+                logger.error("进入组队页面失败")

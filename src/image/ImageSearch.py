@@ -50,12 +50,13 @@ def get_len(pos1, pos2):
 
 def filter_close(list, distance):
     result = list.copy()
-    for i in range(0, len(list) - 1):
-        for j in range(i + 1, len(list)):
-            pos1 = list[i][0]
+    for item in list:
+        for j in range(list.index(item) + 1, len(list)):
+            pos1 = item[0]
             pos2 = list[j][0]
             if get_len(pos1, pos2) < distance:
-                result.remove(list[i])
+                result.remove(item)
+                break
     return result
 
 

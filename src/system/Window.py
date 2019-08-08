@@ -108,7 +108,7 @@ class Window:
         SendMessage(self.hwnd, win32con.WM_NCMBUTTONDOWN)  # 起作用
 
     def click(self, x, y):
-        logger.info('点击-%s,%s' % (x, y))
+        logger.debug('点击-%s,%s' % (x, y))
         long_position = MAKELONG(x, y)
         PostMessage(self.hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, long_position)
         PostMessage(self.hwnd, win32con.WM_LBUTTONUP, win32con.MK_LBUTTON, long_position)

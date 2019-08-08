@@ -1,10 +1,10 @@
 # coding=utf-8
-from abc import abstractmethod
 from random import randint
 from time import time, sleep
 
 from PIL.Image import fromarray
 
+from src.game.config import config
 from src.image import Image
 from src.image.ImageSearch import best_match, mutl_match
 from src.util.log import logger
@@ -26,7 +26,7 @@ class BaseOperator:
 
     def check_sense(self, template_img_paths):
         """
-        检查当前场景是否存在图片
+        检查当前场景是否存在其中一个图片
         :param template_img_paths:要查找的图片位置
         :return: 成功返回True，失败返回False
         """
@@ -51,12 +51,14 @@ class BaseOperator:
         if pos is not None:
             pos[0] = (pos[0][0] - 8, pos[0][1] - 35)
             pos[1] = (pos[1][0] - 8, pos[1][1] - 35)
-        if center:
-            x = int((pos[1][0] + pos[0][0]) / 2)
-            y = int((pos[1][1] + pos[0][1]) / 2)
-            self.window.click(x, y)
+            if center:
+                x = int((pos[1][0] + pos[0][0]) / 2)
+                y = int((pos[1][1] + pos[0][1]) / 2)
+                self.window.click(x, y)
+            else:
+                self.window.click_range(pos[0], pos[1])
         else:
-            self.window.click_range(pos[0], pos[1])
+            logger.info("点击图片失败，未找到图片")
 
     def search_img_zoom(self, template_img, target_img, zoom):
         """
@@ -67,7 +69,27 @@ class BaseOperator:
         :return: 成功返回图片位置[x,y]，失败返回None
         """
         template_img = Image.resize_by_zoom(zoom, template_img)
-        return best_match(target_img, template_img, 0.6, True)
+        threshold = config.getfloat("game", "imageSearchThreshold")
+        return best_match(target_img, template_img, threshold)
+
+    def find_imgs_zoom(self, template_img_paths):
+        """
+        检查当前场景是否存在全部图片
+        :param template_img_paths:要查找的图片位置
+        :return: 成功返回True，失败返回False
+        """
+        list = []
+        screenshot = self.screenshot()
+        screenshot_height, screenshot_width = screenshot.shape[:2]
+        zoom = screenshot_width / default_window_width  # 计算缩放比例
+        for i in range(0, len(template_img_paths)):
+            template_img = Image.read_img(template_img_paths[i], 0)
+            pos = self.search_img_zoom(template_img, screenshot, zoom)
+            if pos is None:
+                return None
+            else:
+                list.append([i, pos, template_img_paths[i]])
+        return list
 
     def search_mutlimg_zoom(self, template_img, target_img, zoom):
 
@@ -79,17 +101,32 @@ class BaseOperator:
         :return: 成功返回图片位置的列表[x,y]，失败返回空列表
         """
         template_img = Image.resize_by_zoom(zoom, template_img)
-        return mutl_match(target_img, template_img, 0.9)
+        threshold = config.getfloat("game", "imageSearchThreshold")
+        return mutl_match(target_img, template_img, threshold)
 
     def wait_senses(self, sense_paths, max_time=30):
         """
-        等待多个图片，返回检测到的数组下标
+        等待多个图片其中一个存在，返回检测到的数组下标
+        :return:
+        """
+        logger.debug("等待游戏场景")
+        start_time = time()
+        while time() - start_time <= max_time:
+            sleep(0.1)
+            pos = self.check_sense(sense_paths)
+            if pos is not None:
+                return pos
+        return None
+
+    def wait_imgs(self, sense_paths, max_time=30):
+        """
+        等待多个图片同时存在，返回检测到的数组下标
         :return:
         """
         start_time = time()
         while time() - start_time <= max_time:
-            sleep(1)
-            pos = self.check_sense(sense_paths)
+            sleep(0.1)
+            pos = self.wait_imgs(sense_paths)
             if pos is not None:
                 return pos
         return None
@@ -236,6 +273,87 @@ class BaseOperator:
         else:
             return False
 
-    @abstractmethod
     def battle(self):
-        pass
+        """
+        战斗模块
+        :return:
+        """
+        logger.info("开始战斗")
+        if self.wait_img(u"resource/img/battleLeftTop.png") is not None:
+            """
+            进入了战斗画面
+            """
+            self.click_ready()
+        else:
+            raise Exception("开始战斗失败")
+        sleep(0.5)
+        logger.info("等待战斗结束")
+        pos = self.wait_senses([u"resource/img/win.png", u"resource/img/fail.png"], 240)
+        if pos is not None:
+            if pos[0] == 0:
+                logger.info("战斗胜利")
+                self.win_deal()
+            elif pos[0] == 1:
+                logger.info("战斗失败")
+                self.fail_deal()
+        else:
+            raise Exception("失败")
+
+    def click_ready(self):
+        """
+        检测并点击开始按钮
+        :return:
+        """
+        max_time = 60
+        start_time = time()
+        while time() - start_time <= max_time:
+            sleep(0.1)
+            pos = self.check_sense([u"resource/img/needBegin.png", u"resource/img/auto.png"])
+            if pos is not None:
+                if pos[0] == 0:
+                    ready_sense = self.check_sense([u"resource/img/btn_ready.png", u"resource/img/readyed.png"])
+                    if ready_sense is not None:
+                        if ready_sense[0] == 0:
+                            logger.info("点击ready按钮")
+                            self.click_img(u"resource/img/btn_ready.png")
+                        elif ready_sense[0] == 1:
+                            logger.info("等待队友准备")
+                else:
+                    logger.info("战斗已经开始")
+                    return
+
+    def win_deal(self):
+        """
+        战斗成功处理
+        :return:
+        """
+        self.click_img(u"resource/img/win.png")
+        sleep(0.5)
+        self.wait_img_click(u"resource/img/battleData.png")
+        for i in range(3):
+            sleep(1)
+            window_size = self.window_size()
+            self.click_range((50, 50), (int(window_size[0] / 5), window_size[1] - 50))
+        if self.wait_img(u"resource/img/inviteDefatlt.png", 5) is not None:
+            logger.info("需要点击默认邀请")
+            sleep(0.5)
+            mode = config.getboolean("game", "inviteDefaultMode")
+            if mode:
+                logger.info("默认邀请队友")
+                self.click_img(u"resource/img/check.png", True)
+            sleep(0.5)
+            logger.info("邀请队友")
+            self.click_img(u"resource/img/okButton.png", True)
+
+    def fail_deal(self):
+        """
+        战斗失败处理
+        :return:
+        """
+        self.click_img(u"resource/img/fail.png")
+        sleep(1)
+        if self.screenshot_find(u"resource/img/battleData.png") is not None:
+            if self.wait_img(u"resource/img/inviteDefatlt.png", 5) is not None:
+                logger.info("需要点击默认邀请")
+                sleep(0.5)
+                self.click_img(u"resource/img/okButton.png", True)
