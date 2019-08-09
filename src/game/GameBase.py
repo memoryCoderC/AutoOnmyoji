@@ -58,7 +58,7 @@ class BaseOperator:
             else:
                 self.window.click_range(pos[0], pos[1])
         else:
-            logger.info("点击图片失败，未找到图片" + template_img_path)
+            logger.debug("点击图片失败，未找到图片" + template_img_path)
 
     def search_img_zoom(self, template_img, target_img, zoom):
         """
@@ -146,7 +146,7 @@ class BaseOperator:
             pos = self.screenshot_find(img_path)
             if pos is not None:
                 return pos
-        logger.info("等待图像失败" + img_path)
+        logger.debug("等待图像失败" + img_path)
         return None
 
     def wait_img_click(self, img_path, max_time=30):
@@ -278,6 +278,7 @@ class BaseOperator:
         战斗模块
         :return:
         """
+        logger.info("等待战斗开始")
         if self.wait_img(u"resource/img/battleLeftTop.png", 120) is not None:
             logger.info("进入战斗场景")
             """
@@ -352,10 +353,9 @@ class BaseOperator:
         #                          (int(window_size[0] / 6), 3 * int(window_size[1] / 4)))
         #         sleep(1)
         if self.screenshot_find(u"resource/img/battleData.png") is not None:
-            while self.screenshot_find(u"resource/img/clickToContinue.png") is not None:
+            while self.wait_img_click(u"resource/img/clickToContinue.png", 1) is not None:
                 logger.info("结算后点击")
-                self.click_img(u"resource/img/clickToContinue.png")
-                sleep(1)
+                sleep(0.2)
         if teammates_number > 0:
             if captain and self.wait_img(u"resource/img/inviteDefatlt.png", 3) is not None:
                 logger.info("需要点击默认邀请")

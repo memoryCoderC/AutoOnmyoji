@@ -1,0 +1,8 @@
+<RCC>
+  <qresource prefix="qresource">
+    <file>img/findere.bmp</file>
+    <file>img/finderf.bmp</file>
+    <file>img/searchw.cur</file>
+    <file>img/spy.ico</file>
+  </qresource>
+</RCC>
