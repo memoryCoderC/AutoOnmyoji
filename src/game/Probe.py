@@ -48,6 +48,7 @@ class Probe(BaseOperator):
                         if self.screenshot_find(u"resource/img/battleBegin.png") is not None:
                             logger.info("身为队长,点击开始战斗")
                             self.captain = True
+                            sleep(0.5)
                             self.click_img(u"resource/img/battleBegin.png")
                         self.count = self.count + 1
                         logger.info("第" + str(self.count) + "次御魂")

@@ -312,6 +312,14 @@ class BaseOperator:
                 if count > 4:
                     raise Exception("未知战斗场景")
 
+    def check_auto_battle(self):
+        auto_sense = self.check_sense([u"resource/img/auto.png", u"resource/img/manual.png"])
+        if auto_sense[0] == 0:
+            logger.debug("已经自动战斗")
+        elif auto_sense[0] == 1:
+            logger.debug("开启自动战斗")
+            self.wait_img_click(u"resource/img/manual.png", 1)
+
     def click_ready(self):
         """
         检测并点击开始按钮
@@ -333,12 +341,8 @@ class BaseOperator:
                             logger.info("等待队友准备")
                 elif pos[0] == 1:
                     logger.info("战斗已经开始")
-                    auto_sense = self.check_sense([u"resource/img/auto.png", u"resource/img/manual.png"])
-                    if auto_sense[0] == 0:
-                        logger.debug("已经自动战斗")
-                    elif auto_sense[0] == 1:
-                        logger.debug("开启自动战斗")
-                        self.wait_img_click(u"resource/img/manual.png", 1)
+                    sleep(0.5)
+                    self.check_auto_battle()
                     return
 
     def win_deal(self, teammates_number, captain):
