@@ -288,9 +288,12 @@ class BaseOperator:
             raise Exception("进入战斗场景失败")
         sleep(0.5)
         logger.info("等待战斗结束")
+        count = 0
         while True:
-            pos = self.check_sense([u"resource/img/win.png", u"resource/img/fail.png", u"resource/img/guihuo.png"])
+            pos = self.check_sense([u"resource/img/win.png", u"resource/img/fail.png", u"resource/img/guihuo.png",
+                                    u"resource/img/battleData.png"])
             if pos is not None:
+                count = 0
                 if pos[0] == 0:
                     logger.info("战斗胜利")
                     self.win_deal(teammates_number, captain)
@@ -301,15 +304,19 @@ class BaseOperator:
                     break
                 elif pos[0] == 2:
                     logger.debug("战斗中...")
+                elif pos[0] == 3:
+                    logger.debug("战斗画面切换中...")
             else:
-                raise Exception("未知战斗场景")
+                count = count + 1
+                if count > 4:
+                    raise Exception("未知战斗场景")
 
     def click_ready(self):
         """
         检测并点击开始按钮
         :return:
         """
-        max_time = 60
+        max_time = 120
         start_time = time()
         while time() - start_time <= max_time:
             sleep(0.1)
@@ -346,6 +353,7 @@ class BaseOperator:
         #         sleep(1)
         if self.screenshot_find(u"resource/img/battleData.png") is not None:
             while self.screenshot_find(u"resource/img/clickToContinue.png") is not None:
+                logger.info("结算后点击")
                 self.click_img(u"resource/img/clickToContinue.png")
                 sleep(1)
         if teammates_number > 0:
