@@ -24,7 +24,7 @@ class BaseOperator:
     def mouse_move(self, pos1, pos2):
         self.window.mouse_move(pos1, pos2)
 
-    def check_sense(self, template_img_paths):
+    def find_imgs(self, template_img_paths):
         """
         检查当前场景是否存在其中一个图片
         :param template_img_paths:要查找的图片位置
@@ -35,7 +35,7 @@ class BaseOperator:
         zoom = screenshot_width / default_window_width  # 计算缩放比例
         for i in range(0, len(template_img_paths)):
             template_img = Image.read_img(template_img_paths[i], 0)
-            pos = self.search_img_zoom(template_img, screenshot, zoom)
+            pos = self.find_img_zoom(template_img, screenshot, zoom)
             if pos is not None:
                 return [i, pos, template_img_paths[i]]
         return None
@@ -57,10 +57,11 @@ class BaseOperator:
                 self.window.click(x, y)
             else:
                 self.window.click_range(pos[0], pos[1])
+            return pos
         else:
             logger.debug("点击图片失败，未找到图片" + template_img_path)
 
-    def search_img_zoom(self, template_img, target_img, zoom):
+    def find_img_zoom(self, template_img, target_img, zoom):
         """
         缩放查找图片
         :param template_img: 要查找的图片
@@ -84,7 +85,7 @@ class BaseOperator:
         zoom = screenshot_width / default_window_width  # 计算缩放比例
         for i in range(0, len(template_img_paths)):
             template_img = Image.read_img(template_img_paths[i], 0)
-            pos = self.search_img_zoom(template_img, screenshot, zoom)
+            pos = self.find_img_zoom(template_img, screenshot, zoom)
             if pos is None:
                 return None
             else:
@@ -104,7 +105,7 @@ class BaseOperator:
         threshold = config.getfloat("game", "imageSearchThreshold")
         return mutl_match(target_img, template_img, threshold)
 
-    def wait_senses(self, sense_paths, max_time=30):
+    def wait_imgs(self, sense_paths, max_time=30):
         """
         等待多个图片其中一个存在，返回检测到的数组下标
         :return:
@@ -113,20 +114,7 @@ class BaseOperator:
         start_time = time()
         while time() - start_time <= max_time:
             sleep(0.1)
-            pos = self.check_sense(sense_paths)
-            if pos is not None:
-                return pos
-        return None
-
-    def wait_imgs(self, sense_paths, max_time=30):
-        """
-        等待多个图片同时存在，返回检测到的数组下标
-        :return:
-        """
-        start_time = time()
-        while time() - start_time <= max_time:
-            sleep(0.1)
-            pos = self.wait_imgs(sense_paths)
+            pos = self.find_imgs(sense_paths)
             if pos is not None:
                 return pos
         return None
@@ -182,7 +170,7 @@ class BaseOperator:
         screenshot_height, screenshot_width = screenshot.shape[:2]
         template_img = Image.read_img(template_img_path, 0)
         zoom = screenshot_width / default_window_width  # 计算缩放比例
-        return self.search_img_zoom(template_img, screenshot, zoom)
+        return self.find_img_zoom(template_img, screenshot, zoom)
 
     def screenshot_mutlfind(self, template_img_path):
         """
@@ -287,12 +275,12 @@ class BaseOperator:
             self.click_ready()
         else:
             raise Exception("进入战斗场景失败")
-        sleep(0.5)
         logger.info("等待战斗结束")
         count = 0
         while True:
-            pos = self.check_sense([u"resource/img/win.png", u"resource/img/fail.png", u"resource/img/guihuo.png",
-                                    u"resource/img/battleData.png"])
+            sleep(0.2)
+            pos = self.find_imgs([u"resource/img/win.png", u"resource/img/fail.png",
+                                  u"resource/img/guihuo.png", u"resource/img/battleData.png"])
             if pos is not None:
                 count = 0
                 if pos[0] == 0:
@@ -309,11 +297,11 @@ class BaseOperator:
                     logger.debug("战斗画面切换中...")
             else:
                 count = count + 1
-                if count > 4:
+                if count > 10:
                     raise Exception("未知战斗场景")
 
     def check_auto_battle(self):
-        auto_sense = self.check_sense([u"resource/img/auto.png", u"resource/img/manual.png"])
+        auto_sense = self.find_imgs([u"resource/img/auto.png", u"resource/img/manual.png"])
         if auto_sense[0] == 0:
             logger.debug("已经自动战斗")
         elif auto_sense[0] == 1:
@@ -329,10 +317,10 @@ class BaseOperator:
         start_time = time()
         while time() - start_time <= max_time:
             sleep(0.1)
-            pos = self.check_sense([u"resource/img/needBegin.png", u"resource/img/guihuo.png"])
+            pos = self.find_imgs([u"resource/img/needBegin.png", u"resource/img/guihuo.png"])
             if pos is not None:
                 if pos[0] == 0:
-                    ready_sense = self.check_sense([u"resource/img/btn_ready.png", u"resource/img/readyed.png"])
+                    ready_sense = self.find_imgs([u"resource/img/btn_ready.png", u"resource/img/readyed.png"])
                     if ready_sense is not None:
                         if ready_sense[0] == 0:
                             logger.info("点击ready按钮")

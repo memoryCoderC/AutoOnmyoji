@@ -1,21 +1,6 @@
-#!/usr/bin/env python
-# coding:utf-8
-#
-# Copyright 2009 CoderZh.com.
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-from PyQt5 import QtCore
+from PyQt5 import QtCore, QtGui
+from PyQt5.QtGui import QPixmap, QCursor
 from PyQt5.QtWidgets import QLabel
-from numpy import unicode
 
 __author__ = 'CoderZh'
 
@@ -32,53 +17,66 @@ class SpyLabel(QLabel):
         self.rectanglePen = win32gui.CreatePen(win32con.PS_SOLID, 3, win32api.RGB(255, 0, 0))
         self.prevWindow = None
         self.setCursor(QtCore.Qt.SizeAllCursor)
-
-    def output(self, message):
-        self.parent.output(message)
+        self.spyingCur = QCursor(QPixmap('resource/img/window/searchw.cur'))
+        self.setGeometry(QtCore.QRect(170, 20, 41, 41))
+        self.setPixmap(QtGui.QPixmap("resource/img/window/finderf.bmp"))
 
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:
             self.spying = True
+            self.setCursor(self.spyingCur)
+            self.setPixmap(QtGui.QPixmap("resource/img/window/findere.bmp"))
+            self.prevWindow = None
 
-    def mouseMoveEvent(self, event):
-        if self.spying:
-            curX, curY = win32gui.GetCursorPos()
-            hwnd = win32gui.WindowFromPoint((curX, curY))
-
-            if self.checkWindowValidity(hwnd):
-                if self.prevWindow:
-                    self.refreshWindow(self.prevWindow)
-
-                self.prevWindow = hwnd
-                self.highlightWindow(hwnd)
-                self.displayWindowInformation(hwnd)
+    # def mouseMoveEvent(self, event):
+    #     if self.spying:
+    #         curX, curY = win32gui.GetCursorPos()
+    #         hwnd = win32gui.WindowFromPoint((curX, curY))
+    #         if self.checkWindowValidity(hwnd):
+    #             if self.prevWindow:
+    #                 self.refreshWindow(self.prevWindow)
+    #             self.prevWindow = hwnd
+    #             self.highlightWindow(hwnd)
+    #             self.displayWindowInformation(hwnd)
 
     def mouseReleaseEvent(self, event):
         if self.spying:
-            if self.prevWindow:
-                self.refreshWindow(self.prevWindow)
-
+            curX, curY = win32gui.GetCursorPos()
+            hwnd = win32gui.WindowFromPoint((curX, curY))
+            if self.checkWindowValidity(hwnd):
+                # if self.prevWindow:
+                #     self.refreshWindow(self.prevWindow)
+                self.prevWindow = hwnd
+                self.highlightWindow(hwnd)
+                self.displayWindowInformation(hwnd)
+            # if self.prevWindow:
+            #     self.refreshWindow(self.prevWindow)
             win32gui.ReleaseCapture()
+            self.setCursor(QtCore.Qt.CrossCursor)
+            self.setPixmap(QtGui.QPixmap("resource/img/window/finderf.bmp"))
             self.spying = False
 
     def highlightWindow(self, hwnd):
-        left, top, right, bottom = win32gui.GetWindowRect(hwnd)
-        windowDc = win32gui.GetWindowDC(hwnd)
-        if windowDc:
-            prevPen = win32gui.SelectObject(windowDc, self.rectanglePen)
-            prevBrush = win32gui.SelectObject(windowDc, win32gui.GetStockObject(win32con.HOLLOW_BRUSH))
+        if hwnd is not None:
+            left, top, right, bottom = win32gui.GetWindowRect(hwnd)
+            windowDc = win32gui.GetWindowDC(hwnd)
+            if windowDc:
+                prevPen = win32gui.SelectObject(windowDc, self.rectanglePen)
+                prevBrush = win32gui.SelectObject(windowDc, win32gui.GetStockObject(win32con.HOLLOW_BRUSH))
+                win32gui.Rectangle(windowDc, 0, 0, right - left, bottom - top)
+                win32gui.SelectObject(windowDc, prevPen)
+                win32gui.SelectObject(windowDc, prevBrush)
+                win32gui.ReleaseDC(hwnd, windowDc)
 
-            win32gui.Rectangle(windowDc, 0, 0, right - left, bottom - top)
+    def get_select_window(self):
+        return self.prevWindow
 
-            win32gui.SelectObject(windowDc, prevPen)
-            win32gui.SelectObject(windowDc, prevBrush)
-            win32gui.ReleaseDC(hwnd, windowDc)
-
-    def refreshWindow(self, hwnd):
-        win32gui.InvalidateRect(hwnd, None, True)
-        win32gui.UpdateWindow(hwnd)
-        win32gui.RedrawWindow(hwnd, None, None,
-                              win32con.RDW_FRAME | win32con.RDW_INVALIDATE | win32con.RDW_UPDATENOW | win32con.RDW_ALLCHILDREN)
+    #
+    # def refreshWindow(self, hwnd):
+    #     win32gui.InvalidateRect(hwnd, None, True)
+    #     win32gui.UpdateWindow(hwnd)
+    #     win32gui.RedrawWindow(hwnd, None, None,
+    #                           win32con.RDW_FRAME | win32con.RDW_INVALIDATE | win32con.RDW_UPDATENOW | win32con.RDW_ALLCHILDREN)
 
     def checkWindowValidity(self, hwnd):
         if not hwnd:
@@ -93,21 +91,7 @@ class SpyLabel(QLabel):
 
     def displayWindowInformation(self, hwnd):
         className = win32gui.GetClassName(hwnd)
-        buf_size = 1 + win32gui.SendMessage(hwnd, win32con.WM_GETTEXTLENGTH, 0, 0)
-        buffer = win32gui.PyMakeBuffer(buf_size)
-        win32gui.SendMessage(hwnd, win32con.WM_GETTEXT, buf_size, buffer)
-        windowText = buffer[:buf_size]
-
-        try:
-            windowText = unicode(windowText, 'gbk')
-        except:
-            pass
-
-        message = ['Handle:\t' + str(hwnd),
-                   'Class Name:\t' + className,
-                   'Window Text:\t' + windowText]
-
-        self.output('\r\n'.join(message))
+        print(className)
 
 # class SpyDialog(QtGui.QDialog, Ui_SpyDialog):
 #     def __init__(self, parent=None):

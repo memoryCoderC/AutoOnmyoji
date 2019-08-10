@@ -29,34 +29,49 @@ class Probe(BaseOperator):
         probe_count = config.getint("game", "probeCount")
         while probe_count == 0 or self.count < probe_count:
             teammates_number = config.getint("game", "teammatesNum")
-            in_team = False
-            start_time = time()
-            while time() - start_time <= 60:
-                sleep(0.1)
-                logger.info("等待接受邀请，进入队伍")
-                pos = self.check_sense([u"resource/img/yuhunTeam.png", u"resource/img/inviteTeam.png"])
-                if pos is not None:
-                    if pos[0] == 0:
-                        logger.info("进入组队页面")
-                        in_team = True
-                        if teammates_number > 0:
-                            if self.wait_teammate(u"resource/img/invite.png", teammates_number, 60) is not None:
-                                logger.info("队友已就位")
-                            else:
-                                logger.error("等待队友失败")
+            if teammates_number > 0:
+                self.battle_team(teammates_number)
+            else:
+                self.battle_self()
+
+    def battle_team(self, teammates_number):
+        in_team = False
+        start_time = time()
+        while time() - start_time <= 60:
+            sleep(0.1)
+            logger.info("等待接受邀请，进入队伍")
+            pos = self.find_imgs([u"resource/img/yuhunTeam.png", u"resource/img/inviteTeam.png"])
+            if pos is not None:
+                if pos[0] == 0:
+                    logger.info("进入组队页面")
+                    in_team = True
+                    if teammates_number > 0:
+                        if self.wait_teammate(u"resource/img/invite.png", teammates_number, 60) is not None:
+                            logger.info("队友已就位")
+                        else:
+                            logger.error("等待队友失败")
+                    sleep(0.5)
+                    if self.screenshot_find(u"resource/img/battleBegin.png") is not None:
+                        logger.info("身为队长,点击开始战斗")
+                        self.captain = True
                         sleep(0.5)
-                        if self.screenshot_find(u"resource/img/battleBegin.png") is not None:
-                            logger.info("身为队长,点击开始战斗")
-                            self.captain = True
-                            sleep(0.5)
-                            self.click_img(u"resource/img/battleBegin.png")
-                        self.count = self.count + 1
-                        logger.info("第" + str(self.count) + "次御魂")
-                        self.battle(teammates_number, self.captain)
-                        break
-                    elif pos[0] == 1:
-                        logger.info("接受组队邀请")
-                        self.click_img(u"resource/img/accept.png")
-                        sleep(0.5)
-            if not in_team:
-                raise Exception("进入组队页面失败")
+                        self.click_img(u"resource/img/battleBegin.png")
+                    self.count = self.count + 1
+                    logger.info("第" + str(self.count) + "次御魂")
+                    self.battle(teammates_number, self.captain)
+                    break
+                elif pos[0] == 1:
+                    logger.info("接受组队邀请")
+                    self.click_img(u"resource/img/accept.png")
+                    sleep(0.5)
+        if not in_team:
+            raise Exception("进入组队页面失败")
+
+    def battle_self(self):
+        pos = self.wait_img(u"resource/img/yuhunSense.png")
+        if pos is not None:
+            logger.info("进入御魂页面")
+            pos = self.click_img(u"resource/img/challenge.png", True)
+            if pos is not None:
+                logger.info("开始单人战斗")
+                self.battle(0, False)
