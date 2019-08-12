@@ -20,6 +20,9 @@ class SpyLabel(QLabel):
         self.spyingCur = QCursor(QPixmap('resource/img/window/searchw.cur'))
         self.setGeometry(QtCore.QRect(170, 20, 41, 41))
         self.setPixmap(QtGui.QPixmap("resource/img/window/finderf.bmp"))
+        self.setToolTip('在上面的窗口选择器上按下鼠标左键，\n拖动到要辅助的游戏窗口上，\n松开鼠标左键完成选择')
+
+    # 在上面的窗口选择器上按下鼠标左键，\n拖动到要辅助的游戏窗口上，\n松开鼠标左键完成选择
 
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:
@@ -92,24 +95,3 @@ class SpyLabel(QLabel):
     def displayWindowInformation(self, hwnd):
         className = win32gui.GetClassName(hwnd)
         print(className)
-
-# class SpyDialog(QtGui.QDialog, Ui_SpyDialog):
-#     def __init__(self, parent=None):
-#         QtGui.QDialog.__init__(self, parent)
-#         self.setupUi(self)
-#         self.spyLabel = SpyLabel(self)
-#         self.spyLabel.setGeometry(QtCore.QRect(170, 20, 41, 41))
-#         self.spyLabel.setPixmap(QtGui.QPixmap(":/res/finderf.bmp"))
-#         self.spyLabel.setObjectName("spyLabel")
-#
-#     def output(self, message):
-#         self.textEditInformation.setText(message)
-
-
-# if __name__ == "__main__":
-#     import sys
-#
-#     app = QtGui.QApplication(sys.argv)
-#     dlg = SpyDialog()
-#     dlg.show()
-#     sys.exit(app.exec_())
