@@ -4,7 +4,7 @@ from time import time, sleep
 
 from PIL.Image import fromarray
 
-from src.game.config import config
+from src.game.Config import config
 from src.image import Image
 from src.image.ImageSearch import best_match, mutl_match
 from src.util.log import logger
@@ -49,14 +49,7 @@ class BaseOperator:
         """
         pos = self.screenshot_find(template_img_path)
         if pos is not None:
-            pos[0] = (pos[0][0] - 8, pos[0][1] - 35)
-            pos[1] = (pos[1][0] - 8, pos[1][1] - 35)
-            if center:
-                x = int((pos[1][0] + pos[0][0]) / 2)
-                y = int((pos[1][1] + pos[0][1]) / 2)
-                self.window.click(x, y)
-            else:
-                self.window.click_range(pos[0], pos[1])
+            self.click(pos, center)
             return pos
         else:
             logger.debug("点击图片失败，未找到图片" + template_img_path)
@@ -137,9 +130,10 @@ class BaseOperator:
         logger.debug("等待图像失败" + img_path)
         return None
 
-    def wait_img_click(self, img_path, max_time=30):
+    def wait_img_click(self, img_path, center=False, max_time=30):
         """
         等待游戏图像并点击
+            :param center:
             :param max_time:
             :param self:
             :param img_path:
@@ -147,9 +141,19 @@ class BaseOperator:
         """
         pos = self.wait_img(img_path, max_time)
         if pos is not None:
-            self.window.click_range(pos[0], pos[1])
+            self.click(pos, center)
             return pos
         return None
+
+    def click(self, pos, center=False):
+        pos[0] = (pos[0][0] - 8, pos[0][1] - 35)
+        pos[1] = (pos[1][0] - 8, pos[1][1] - 35)
+        if center:
+            x = int((pos[1][0] + pos[0][0]) / 2)
+            y = int((pos[1][1] + pos[0][1]) / 2)
+            self.window.click(x, y)
+        else:
+            self.window.click_range(pos[0], pos[1])
 
     def click_range(self, left_top, right_bottom):
         """
@@ -279,8 +283,7 @@ class BaseOperator:
         count = 0
         while True:
             sleep(0.2)
-            pos = self.find_imgs([u"resource/img/win.png", u"resource/img/fail.png",
-                                  u"resource/img/guihuo.png", u"resource/img/battleData.png"])
+            pos = self.wait_imgs([u"resource/img/win.png", u"resource/img/fail.png", u"resource/img/guihuo.png"])
             if pos is not None:
                 count = 0
                 if pos[0] == 0:
@@ -293,11 +296,9 @@ class BaseOperator:
                     break
                 elif pos[0] == 2:
                     logger.debug("战斗中...")
-                elif pos[0] == 3:
-                    logger.debug("战斗画面切换中...")
             else:
                 count = count + 1
-                if count > 10:
+                if count > 5:
                     raise Exception("未知战斗场景")
 
     def check_auto_battle(self):
@@ -344,12 +345,11 @@ class BaseOperator:
         #         self.click_range((100, int(window_size[1] / 2)),
         #                          (int(window_size[0] / 6), 3 * int(window_size[1] / 4)))
         #         sleep(1)
-        if self.screenshot_find(u"resource/img/battleData.png") is not None:
-            while self.wait_img_click(u"resource/img/clickToContinue.png", 1) is not None:
-                logger.info("结算后点击")
-                sleep(0.2)
+        while self.wait_img_click(u"resource/img/clickToContinue.png", max_time=2) is not None:
+            logger.info("结算后点击")
+            sleep(0.2)
         if teammates_number > 0:
-            if captain and self.wait_img(u"resource/img/inviteDefatlt.png", 3) is not None:
+            if captain and self.wait_img(u"resource/img/inviteDefatlt.png", max_time=3) is not None:
                 logger.info("需要点击默认邀请")
                 sleep(0.5)
                 if config.getboolean("game", "inviteDefaultMode"):

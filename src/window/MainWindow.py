@@ -9,6 +9,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QDialog
 
+from src.game.Enchantment import Enchantment
 from src.game.Probe import Probe
 from src.system.Window import Window
 from src.util import permissionUtil
@@ -56,14 +57,15 @@ class Ui_MainWindow(object):
         selectHwndDialog.setupUi()
         selectHwndDialog.show()
 
-
     def begin_assent(self):
         try:
             logger.info("开始运行")
             permissionUtil.check_get_permission()
             logger.info("权限判断结束")
             window = Window(self.hwnd)
-            probe = Probe(window)
-            probe.begin_battle()
+            # probe = Probe(window)
+            # probe.begin_battle()
+            enchantment = Enchantment(window)
+            enchantment.begin_battle()
         except Exception as e:
             logger.exception(e)

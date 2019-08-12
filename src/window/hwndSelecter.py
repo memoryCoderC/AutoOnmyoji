@@ -28,7 +28,7 @@ class Ui_SelectHwndDialog(QDialog):
 
     def setupUi(self):
         self.setObjectName("SelectHwndDialog")
-        self.resize(261, 182)
+        self.resize(261, 152)
         self.setModal(True)
         self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, False)
 
@@ -37,14 +37,15 @@ class Ui_SelectHwndDialog(QDialog):
         self.promptLabel.setObjectName("promptLabel")
 
         self.okButton = QtWidgets.QPushButton(self)
-        self.okButton.setGeometry(QtCore.QRect(180, 150, 75, 23))
+        self.okButton.setGeometry(QtCore.QRect(180, 120, 75, 23))
         self.okButton.setObjectName("okButton")
 
         self.spyLabel = SpyLabel(self)
         self.spyLabel.setObjectName("spyLabel")
+        self.spyLabel.move(115, 50)
 
         self.okButton.clicked.connect(lambda: self.start_assist())
-        self.retranslateUi(self)
+        self.retranslateUi()
         QtCore.QMetaObject.connectSlotsByName(self)
 
     def retranslateUi(self):

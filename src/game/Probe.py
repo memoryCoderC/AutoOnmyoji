@@ -2,7 +2,7 @@
 from time import sleep, time
 
 from src.game.GameBase import BaseOperator
-from src.game.config import config
+from src.game.Config import config
 from src.util.log import logger
 
 
