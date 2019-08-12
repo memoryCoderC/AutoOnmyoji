@@ -28,6 +28,7 @@ class Probe(BaseOperator):
     def begin_battle(self):
         probe_count = config.getint("game", "probeCount")
         while probe_count == 0 or self.count < probe_count:
+            sleep(0.5)
             teammates_number = config.getint("game", "teammatesNum")
             if teammates_number > 0:
                 self.battle_team(teammates_number)

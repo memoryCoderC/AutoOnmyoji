@@ -64,7 +64,8 @@ class BaseOperator:
         """
         template_img = Image.resize_by_zoom(zoom, template_img)
         threshold = config.getfloat("game", "imageSearchThreshold")
-        return best_match(target_img, template_img, threshold)
+        debug = config.getboolean("game", "debug")
+        return best_match(target_img, template_img, threshold, debug)
 
     def find_imgs_zoom(self, template_img_paths):
         """
@@ -283,7 +284,7 @@ class BaseOperator:
         count = 0
         while True:
             sleep(0.2)
-            pos = self.wait_imgs([u"resource/img/win.png", u"resource/img/fail.png", u"resource/img/guihuo.png"])
+            pos = self.wait_imgs([u"resource/img/win.png", u"resource/img/fail.png", u"resource/img/guihuo.png"], 10)
             if pos is not None:
                 count = 0
                 if pos[0] == 0:
