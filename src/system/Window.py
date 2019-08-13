@@ -3,7 +3,7 @@ import random
 import time
 
 import win32con
-from win32api import MAKELONG
+from win32api import MAKELONG, mouse_event, SetCursorPos
 from win32gui import FindWindow, GetWindowRect, GetWindowDC, DeleteObject, ReleaseDC, PostMessage, \
     SendMessage
 from win32ui import CreateDCFromHandle, CreateBitmap, GetForegroundWindow
@@ -113,6 +113,16 @@ class Window:
         PostMessage(self.hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, long_position)
         PostMessage(self.hwnd, win32con.WM_LBUTTONUP, win32con.MK_LBUTTON, long_position)
 
+    def mouse_down(self, x, y):
+        logger.debug('鼠标按下-%s,%s' % (x, y))
+        long_position = MAKELONG(x, y)
+        PostMessage(self.hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, long_position)
+
+    def mouse_up(self, x, y):
+        logger.debug('鼠标弹起-%s,%s' % (x, y))
+        long_position = MAKELONG(x, y)
+        PostMessage(self.hwnd, win32con.WM_LBUTTONUP, win32con.MK_LBUTTON, long_position)
+
     def click_range(self, left_top, right_bottom):
         x = random.randint(left_top[0], right_bottom[0])
         y = random.randint(left_top[1], right_bottom[1])
@@ -136,6 +146,47 @@ class Window:
             time.sleep(0.01)
         SendMessage(self.hwnd, win32con.WM_LBUTTONUP, 0, MAKELONG(pos2[0], pos2[1]))
 
+    def mouse_move_distance(self, pos1, distance):
+        """
+        后台鼠标移动
+            :param distance:
+            :param self:
+            :param pos1: (x,y) 起点坐标
+        """
+        l = MAKELONG(pos1[0], pos1[1])
+        SendMessage(self.hwnd, win32con.WM_MOUSEMOVE, 0, l)
+        time.sleep(0.01)
+        l = MAKELONG(pos1[0] + distance[0], pos1[1] + distance[1])
+        SendMessage(self.hwnd, win32con.WM_MOUSEMOVE, 0, l)
+
+    def mouse_drag_distance(self, pos, distance):
+        """
+        后台鼠标移动
+            :param distance:
+            :param self:
+            :param pos: (x,y) 起点坐标
+        """
+        self.mouse_down(pos[0], pos[1])
+        self.mouse_move_distance(pos, distance)
+        self.mouse_up(pos[0] + distance[0], pos[1] + distance[1])
+
+    def mouse_wheel(self, distance):
+        """
+        鼠标中建滚动
+            :param distance:
+            :param self:
+        """
+        mouse_event(win32con.MOUSEEVENTF_WHEEL, 0, 0, distance)
+
+    def setCursorPos(self, pos):
+        """
+        设置鼠标位置
+            :param pos:
+            :param self:
+        """
+
+        SetCursorPos(pos)
+
     def mouse_move(self, pos1, pos2):
         """
         后台鼠标移动
@@ -143,8 +194,8 @@ class Window:
             :param pos1: (x,y) 起点坐标
             :param pos2: (x,y) 终点坐标
         """
-        PostMessage(self.hwnd, win32con.WM_CAPTURECHANGED, win32con.MK_LBUTTON,
-                    MAKELONG(pos1[0], pos1[1]))
+        # PostMessage(self.hwnd, win32con.WM_CAPTURECHANGED, win32con.MK_LBUTTON,
+        #             MAKELONG(pos1[0], pos1[1]))
         step_width_list = []
         step_height_list = []
         step_list = []
@@ -176,5 +227,6 @@ class Window:
                 else:
                     step_list.append([step_width_list[i], pos2[1]])
         for pos in step_list:
-            SendMessage(self.hwnd, win32con.WM_MOUSEMOVE, 0, MAKELONG(pos[0], pos[1]))
+            l = MAKELONG(pos[0], pos[1])
+            SendMessage(self.hwnd, win32con.WM_MOUSEMOVE, 0, l)
             time.sleep(0.01)

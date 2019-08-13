@@ -7,22 +7,21 @@ from PIL.Image import fromarray
 from src.game.Config import config
 from src.image import Image
 from src.image.ImageSearch import best_match, mutl_match
+from src.system.Window import Window
 from src.util.log import logger
 
 default_window_width = 1152
 default_window_height = 679
 
 
-class BaseOperator:
+class BaseOperator(Window):
     """
     游戏基本操作方式
     """
 
     def __init__(self, window):
+        super().__init__(window)
         self.window = window
-
-    def mouse_move(self, pos1, pos2):
-        self.window.mouse_move(pos1, pos2)
 
     def find_imgs(self, template_img_paths):
         """
@@ -271,6 +270,7 @@ class BaseOperator:
         战斗模块
         :return:
         """
+        isWin = False
         logger.info("等待战斗开始")
         if self.wait_img(u"resource/img/battleLeftTop.png", 120) is not None:
             logger.info("进入战斗场景")
@@ -289,6 +289,7 @@ class BaseOperator:
                 count = 0
                 if pos[0] == 0:
                     logger.info("战斗胜利")
+                    isWin = True
                     self.win_deal(teammates_number, captain)
                     break
                 elif pos[0] == 1:
@@ -301,6 +302,7 @@ class BaseOperator:
                 count = count + 1
                 if count > 5:
                     raise Exception("未知战斗场景")
+        return isWin
 
     def check_auto_battle(self):
         auto_sense = self.find_imgs([u"resource/img/auto.png", u"resource/img/manual.png"])
