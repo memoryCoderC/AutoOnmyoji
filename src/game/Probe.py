@@ -1,6 +1,7 @@
 # coding=utf-8
 from time import sleep, time
 
+from src.game import Config
 from src.game.GameBase import BaseOperator
 from src.game.Config import config
 from src.util.log import logger
@@ -28,6 +29,9 @@ class Probe(BaseOperator):
     def begin_battle(self):
         probe_count = config.getint("game", "probeCount")
         while probe_count == 0 or self.count < probe_count:
+            if not Config.isRun:
+                logger.info("手动停止战斗")
+                break
             sleep(0.5)
             teammates_number = config.getint("game", "teammatesNum")
             if teammates_number > 0:

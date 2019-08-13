@@ -1,5 +1,6 @@
 import time
 
+from src.game import Config
 from src.game.GameBase import BaseOperator
 from src.util.log import logger
 
@@ -16,13 +17,15 @@ class Enchantment(BaseOperator):
 
     def begin_battle(self):
         while True:
+            if not Config.isRun:
+                logger.info("手动退出")
+                break
             self.wait_img(u"resource/img/enchantment/enchantment.png")
             logger.info("进入突破页面")
             personal = self.check_personal()
             if not personal:
                 if self.screenshot_find("resource/img/enchantment/battleNumZero.png") is not None:
                     logger.info("阴阳寮没有战斗次数")
-
             pos = self.wait_img_click(u"resource/img/enchantment/person.png", max_time=5)
             if pos is not None:
                 logger.info("开始第一次战斗尝试")
