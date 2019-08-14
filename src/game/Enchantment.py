@@ -15,14 +15,7 @@ class Enchantment(BaseOperator):
         self.window = window
         self.count = 0
 
-    def on_begin_battle(self, end_method):
-        try:
-            self.begin_battle()
-        except Exception as e:
-            logger.exception(e)
-        finally:
-            logger.info("战斗结束")
-            end_method()
+
 
     def refesh_hut(self):
         """

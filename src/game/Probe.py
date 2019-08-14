@@ -25,15 +25,6 @@ class Probe(BaseOperator):
             pos1 = pos2
             sleep(1)
 
-    def on_begin_battle(self, end_method):
-        try:
-            self.begin_battle()
-        except Exception as e:
-            logger.exception(e)
-        finally:
-            logger.info("战斗结束")
-            end_method()
-
     def begin_battle(self):
         probe_count = config.getint("game", "probeCount")
         while probe_count == 0 or self.count < probe_count:

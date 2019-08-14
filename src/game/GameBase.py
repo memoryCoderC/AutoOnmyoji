@@ -400,3 +400,11 @@ class BaseOperator(Window):
     def begin_battle(self):
         pass
 
+    def on_begin_battle(self, end_method):
+        try:
+            self.begin_battle()
+        except Exception as e:
+            logger.exception(e)
+        finally:
+            logger.info("战斗结束")
+            end_method()
