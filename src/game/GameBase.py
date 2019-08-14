@@ -1,4 +1,5 @@
 # coding=utf-8
+import abc
 from random import randint
 from time import time, sleep
 
@@ -342,12 +343,6 @@ class BaseOperator(Window):
         战斗成功处理
         :return:
         """
-        # for i in range(4):
-        #     if self.screenshot_find(u"resource/img/battleData.png") is not None:
-        #         window_size = self.window_size()
-        #         self.click_range((100, int(window_size[1] / 2)),
-        #                          (int(window_size[0] / 6), 3 * int(window_size[1] / 4)))
-        #         sleep(1)
         while self.wait_img_click(u"resource/img/clickToContinue.png", max_time=2) is not None:
             logger.info("结算后点击")
             sleep(0.2)
@@ -386,12 +381,22 @@ class BaseOperator(Window):
             :param img_path:
             :return: 成功返回图片位置[left_top,right_bottom]，失败返回None
         """
-        logger.info("检查队友")
-        start_time = time()
-        while time() - start_time <= max_time:
-            sleep(1)
-            pos = self.screenshot_mutlfind(img_path)
-            if len(pos) <= 2 - teammates_number:
-                return pos
-            logger.info("等待队友中...")
-        return None
+        if teammates_number > 0:
+            logger.info("检查队友")
+            start_time = time()
+            while time() - start_time <= max_time:
+                sleep(1)
+                pos = self.screenshot_mutlfind(img_path)
+                if len(pos) <= 2 - teammates_number:
+                    logger.info("队友已就位")
+                    return True
+                logger.info("等待队友中...")
+            logger.error("等待队友失败")
+            raise Exception("等待队友失败")
+        else:
+            return True
+
+    @abc.abstractmethod
+    def begin_battle(self):
+        pass
+

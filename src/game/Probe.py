@@ -1,9 +1,8 @@
 # coding=utf-8
 from time import sleep, time
 
-from src.game import Config
-from src.game.GameBase import BaseOperator
 from src.game.Config import config
+from src.game.GameBase import BaseOperator
 from src.util.log import logger
 
 
@@ -26,12 +25,18 @@ class Probe(BaseOperator):
             pos1 = pos2
             sleep(1)
 
+    def on_begin_battle(self, end_method):
+        try:
+            self.begin_battle()
+        except Exception as e:
+            logger.exception(e)
+        finally:
+            logger.info("战斗结束")
+            end_method()
+
     def begin_battle(self):
         probe_count = config.getint("game", "probeCount")
         while probe_count == 0 or self.count < probe_count:
-            if not Config.isRun:
-                logger.info("手动停止战斗")
-                break
             sleep(0.5)
             teammates_number = config.getint("game", "teammatesNum")
             if teammates_number > 0:
@@ -50,17 +55,9 @@ class Probe(BaseOperator):
                 if pos[0] == 0:
                     logger.info("进入组队页面")
                     in_team = True
-                    if teammates_number > 0:
-                        if self.wait_teammate(u"resource/img/invite.png", teammates_number, 60) is not None:
-                            logger.info("队友已就位")
-                        else:
-                            logger.error("等待队友失败")
+                    self.wait_teammate(u"resource/img/invite.png", teammates_number, 60)
                     sleep(0.5)
-                    if self.screenshot_find(u"resource/img/battleBegin.png") is not None:
-                        logger.info("身为队长,点击开始战斗")
-                        self.captain = True
-                        sleep(0.5)
-                        self.click_img(u"resource/img/battleBegin.png")
+                    self.captain = self.check_captain_click()
                     self.count = self.count + 1
                     logger.info("第" + str(self.count) + "次御魂")
                     self.battle(teammates_number, self.captain)
@@ -71,6 +68,14 @@ class Probe(BaseOperator):
                     sleep(0.5)
         if not in_team:
             raise Exception("进入组队页面失败")
+
+    def check_captain_click(self):
+        pos = self.screenshot_find(u"resource/img/battleBeginButton.png")
+        if pos is not None:
+            logger.info("身为队长,点击开始战斗")
+            self.click(u"resource/img/battleBeginButton.png")
+            return True
+        return False
 
     def battle_self(self):
         pos = self.wait_img(u"resource/img/yuhunSense.png")

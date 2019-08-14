@@ -11,6 +11,8 @@ from src.window.MainWindow import Ui_MainWindow
 
 if __name__ == '__main__':
     # 创建应用程序和对象
+    permissionUtil.check_get_permission()
+    logger.info("权限判断结束")
     app = QApplication(sys.argv)
     ex = Ui_MainWindow()
     MainWindow = QMainWindow()
