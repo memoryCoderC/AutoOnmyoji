@@ -1,10 +1,9 @@
 import time
 
-from src.game import Config
 from src.game.GameBase import BaseOperator
 from src.util.log import logger
 
-hutRecoverTime = 5 * 60 * 5
+hutRecoverTime = 3 * 60 * 5
 selfRecoverTime = 5 * 60
 
 
@@ -15,9 +14,7 @@ class Enchantment(BaseOperator):
         self.window = window
         self.count = 0
 
-
-
-    def refesh_hut(self):
+    def re_in(self):
         """
         重新进入来刷新阴阳寮的战斗状态
         :return:
@@ -25,8 +22,10 @@ class Enchantment(BaseOperator):
         logger.info("刷新阴阳寮状态")
         self.wait_img(u"resource/img/enchantment/enchantment.png")
         self.click_img(u"resource/img/enchantment/exit.png")
-        self.wait_img_click(u"resource/img/enchantment/enchantmentIcon.png")
-        self.wait_img_click(u"resource/img/enchantment/hutButton.png")
+        time.sleep(1)
+        self.wait_img_click(u"resource/img/enchantment/enchantmentIcon.png", center=True)
+        time.sleep(1)
+        self.wait_img_click(u"resource/img/enchantment/hutButton.png", center=True)
 
     def begin_battle(self):
         while True:
@@ -38,7 +37,7 @@ class Enchantment(BaseOperator):
                     logger.info("等待突破次数恢复")
                     time.sleep(3 * 10 * 60)
                     logger.info("突破次数恢复继续战斗")
-                    self.refesh_hut()
+                    self.re_in()
                 else:
                     logger.info("退出挑战")
                     return
@@ -119,13 +118,15 @@ class Enchantment(BaseOperator):
         """
         logger.info("阴阳寮突破下滑")
         fail_list = self.screenshot_mutlfind(u"resource/img/enchantment/enchantmentFail.png")
-        fail_size = len(fail_list)
+        attacked = self.screenshot_mutlfind(u"resource/img/enchantment/attacked.png")
+        list = fail_list + attacked
+        fail_size = len(list)
         if fail_size == 0:
             logger.info("不存在攻击失败的结界")
-        elif fail_size == 8:
+        else:
             logger.info("寮突破向下移动")
-            x = int((fail_list[0][0][0] + fail_list[0][1][0]) / 2)
-            y = int((fail_list[0][0][1] + fail_list[0][1][1]) / 2)
+            x = int((list[0][0][0] + list[0][1][0]) / 2)
+            y = int((list[0][0][1] + list[0][1][1]) / 2)
             while True:
                 self.window.mouse_drag_distance((x, y), (0, -10))
                 sense = self.find_imgs(
@@ -135,8 +136,9 @@ class Enchantment(BaseOperator):
                     if sense[0] == 0:
                         logger.info("找到了可攻击目标")
                         return True
-                    elif sense[1] == 1:
+                    elif sense[0] == 1:
                         logger.info("滑动到了底部")
                         return False
+                    time.sleep(0.3)
                 else:
                     raise Exception("非寮突破界面")
