@@ -64,7 +64,7 @@ class Probe(BaseOperator):
         pos = self.screenshot_find(u"resource/img/battleBeginButton.png")
         if pos is not None:
             logger.info("身为队长,点击开始战斗")
-            self.click(u"resource/img/battleBeginButton.png")
+            self.click_img(u"resource/img/battleBeginButton.png")
             return True
         return False
 

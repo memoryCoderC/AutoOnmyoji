@@ -35,7 +35,7 @@ class Enchantment(BaseOperator):
             if not self.check_canbattle_num(personal):
                 if not personal:
                     logger.info("等待突破次数恢复")
-                    time.sleep(3 * 10 * 60)
+                    time.sleep(hutRecoverTime)
                     logger.info("突破次数恢复继续战斗")
                     self.re_in()
                 else:
@@ -44,6 +44,7 @@ class Enchantment(BaseOperator):
             pos = self.wait_img_click(u"resource/img/enchantment/person.png", max_time=5)
             if pos is not None:
                 logger.info("开始第一次战斗尝试")
+                time.sleep(0.5)
                 pos = self.wait_img_click(u"resource/img/enchantment/attack.png", center=True)
                 time.time()
                 print(pos)
@@ -60,7 +61,7 @@ class Enchantment(BaseOperator):
         if personal:
             if self.screenshot_find("resource/img/enchantment/personZero.png") is not None:
                 logger.info("个人没有结界挑战卷")
-                return False
+                return True
         else:
             if self.screenshot_find("resource/img/enchantment/battleNumZero.png") is not None:
                 logger.info("阴阳寮没有战斗次数")

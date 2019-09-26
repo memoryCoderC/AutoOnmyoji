@@ -94,14 +94,16 @@ class Window:
 
         ##方法三（第二部分）：opencv+numpy保存
         ###PrintWindow成功，保存到文件，显示到屏幕
-        # im_opencv = numpy.frombuffer(signed_ints_array, dtype='uint8')
-        # im_opencv.shape = (_height, _width, 4)
-        # cv2.cvtColor(im_opencv, cv2.COLOR_BGRA2RGB)
-        # cv2.imwrite("im_opencv.jpg", im_opencv, [int(cv2.IMWRITE_JPEG_QUALITY), 100])  # 保存
-        # cv2.namedWindow('im_opencv')  # 命名窗口
-        # cv2.imshow("im_opencv", im_opencv)  # 显示
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
+            # import numpy
+            # im_opencv = numpy.frombuffer(signed_ints_array, dtype='uint8')
+            # im_opencv.shape = (_height, _width, 4)
+            # import cv2
+            # cv2.cvtColor(im_opencv, cv2.COLOR_BGRA2RGB)
+            # cv2.imwrite("im_opencv.jpg", im_opencv, [int(cv2.IMWRITE_JPEG_QUALITY), 100])  # 保存
+            # cv2.namedWindow('im_opencv')  # 命名窗口
+            # cv2.imshow("im_opencv", im_opencv)  # 显示
+            # cv2.waitKey(0)
+            # cv2.destroyAllWindows()
 
     def mouse_active(self):
         SendMessage(self.hwnd, win32con.WM_SETFOCUS)  # 起作用
