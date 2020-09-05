@@ -32,7 +32,7 @@ class Enchantment(BaseOperator):
             self.wait_img(u"resource/img/enchantment/enchantment.png")
             logger.info("进入突破页面")
             personal = self.check_personal()
-            if not self.check_canbattle_num(personal):
+            if self.check_canbattle_num(personal):
                 if not personal:
                     logger.info("等待突破次数恢复")
                     time.sleep(hutRecoverTime)
@@ -41,21 +41,48 @@ class Enchantment(BaseOperator):
                 else:
                     logger.info("退出挑战")
                     return
-            pos = self.wait_img_click(u"resource/img/enchantment/person.png", max_time=5)
-            if pos is not None:
-                logger.info("开始第一次战斗尝试")
-                time.sleep(0.5)
-                pos = self.wait_img_click(u"resource/img/enchantment/attack.png", center=True)
-                time.time()
-                print(pos)
-                self.battle(0, False)
             else:
-                logger.info("不存在未攻击的结界")
-                if self.refresh(personal):
-                    logger.info("找到战斗目标继续战斗")
+                time.sleep(0.5)
+                pos = self.wait_imgs([u"resource/img/enchantment/person.png", u"resource/img/enchantment/person1.png"],
+                                     max_time=5)
+                if pos[0] is not 0:
+                    logger.info("开始第一次战斗尝试")
+                    self.click(pos[0])
+                    time.sleep(0.5)
+                    pos = self.wait_img_click(u"resource/img/enchantment/attack.png", center=True)
+                    time.time()
+                    print(pos)
+                    self.battle(0, False)
+                elif pos[1] is not 0:
+                    logger.info("开始第一次战斗尝试")
+                    self.click(pos[1])
+                    time.sleep(0.5)
+                    pos = self.wait_img_click(u"resource/img/enchantment/attack.png", center=True)
+                    time.time()
+                    print(pos)
+                    self.battle(0, False)
                 else:
-                    logger.info("已经全部攻击过")
-                    return
+                    logger.info("不存在未攻击的结界")
+                    if self.refresh(personal):
+                        logger.info("找到战斗目标继续战斗")
+                    else:
+                        logger.info("已经全部攻击过")
+                        return
+            # pos = self.wait_img_click(u"resource/img/enchantment/person.png", max_time=5)
+            # if pos is not None:
+            #     logger.info("开始第一次战斗尝试")
+            #     time.sleep(0.5)
+            #     pos = self.wait_img_click(u"resource/img/enchantment/attack.png", center=True)
+            #     time.time()
+            #     print(pos)
+            #     self.battle(0, False)
+            # else:
+            #     logger.info("不存在未攻击的结界")
+            #     if self.refresh(personal):
+            #         logger.info("找到战斗目标继续战斗")
+            #     else:
+            #         logger.info("已经全部攻击过")
+            #         return
 
     def check_canbattle_num(self, personal):
         if personal:
@@ -65,8 +92,8 @@ class Enchantment(BaseOperator):
         else:
             if self.screenshot_find("resource/img/enchantment/battleNumZero.png") is not None:
                 logger.info("阴阳寮没有战斗次数")
-                return False
-        return True
+                return True
+        return False
 
     def check_personal(self):
         """
