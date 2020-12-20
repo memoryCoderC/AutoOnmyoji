@@ -45,7 +45,7 @@ class Enchantment(BaseOperator):
                 time.sleep(0.5)
                 pos = self.wait_imgs([u"resource/img/enchantment/person.png", u"resource/img/enchantment/person1.png"],
                                      max_time=5)
-                if pos[0] is not 0:
+                if pos[0] is not 0 and pos[0] is not 1:
                     logger.info("开始第一次战斗尝试")
                     self.click(pos[0])
                     time.sleep(0.5)
