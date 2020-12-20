@@ -15,6 +15,7 @@ from PyQt5.QtWidgets import QComboBox
 from src.game import Config
 from src.game.Enchantment import Enchantment
 from src.game.Probe import Probe
+from src.game.four import Four
 from src.system.Window import Window
 from src.util import permissionUtil
 from src.util.ThreadUtil import stop_thread
@@ -39,7 +40,7 @@ class Ui_MainWindow(object):
         self.appNameLabel.setGeometry(QtCore.QRect(250, 0, 121, 41))
 
         self.battleTypeBox = QComboBox(self.centralwidget, minimumWidth=200)
-        self.battleTypeBox.addItems(["御魂/业原火/觉醒", "结界突破"])
+        self.battleTypeBox.addItems(["御魂/业原火/觉醒", "结界突破", "恶灵巢穴"])
 
         font = QtGui.QFont()
         font.setPointSize(15)
@@ -90,8 +91,10 @@ class Ui_MainWindow(object):
         battle = None
         if self.battleTypeBox.currentIndex() == 0:
             battle = Probe(window)
-        else:
+        elif self.battleTypeBox.currentIndex() == 1:
             battle = Enchantment(window)
+        elif self.battleTypeBox.currentIndex() == 2:
+            battle = Four(window)
         self.battle_thread = _thread.start_new_thread(battle.on_begin_battle, (self.stop,))
         Config.isRun = True
         self.startButton.setText("关闭")
